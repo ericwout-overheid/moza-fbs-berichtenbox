@@ -9,6 +9,7 @@ dependencies {
     api(libs.opentelemetry.api)
     implementation(libs.opentelemetry.exporter.otlp)
 
+    testImplementation(libs.opentelemetry.sdk.testing)
     testImplementation(libs.mockk)
     testImplementation(kotlin("test"))
 }
