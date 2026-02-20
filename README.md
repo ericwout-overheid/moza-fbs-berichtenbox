@@ -3,6 +3,12 @@
 [![CI](https://github.com/ericwout-overheid/moza-fbs-berichtenbox/actions/workflows/ci.yml/badge.svg)](https://github.com/ericwout-overheid/moza-fbs-berichtenbox/actions/workflows/ci.yml)
 [![License: EUPL 1.2](https://img.shields.io/badge/License-EUPL%201.2-blue.svg)](LICENSE)
 
+> **Persoonlijk oefenproject** -- Dit is een persoonlijk leerproject om ervaring op te doen met
+> [Claude Code](https://docs.anthropic.com/en/docs/claude-code) en de agent skills van
+> [developer.overheid.nl](https://developer.overheid.nl/) en
+> [Logius Standaarden](https://github.com/logius-standaarden).
+> Het is **geen officieel product** van Logius, BZK of enige andere overheidsorganisatie.
+
 Referentie-implementatie van een **eigen berichtenmagazijn** voor het Federatief Berichtenstelsel (FBS), inclusief een FBS Client SDK. Dit project laat zien hoe een overheidsorganisatie een eigen FBS-compliant berichtenmagazijn kan bouwen en berichten kan uitwisselen binnen het stelsel. Het berichtenmagazijn biedt opslag, routering en notificatie van berichten aan burgers en ondernemers, conform de standaarden van Logius/BZK.
 
 ## Kenmerken

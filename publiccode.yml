@@ -18,14 +18,15 @@ developmentStatus: development
 description:
   nl:
     shortDescription: >-
-      Referentie-implementatie eigen berichtenmagazijn voor het Federatief
-      Berichtenstelsel
+      Oefenproject: referentie-implementatie eigen berichtenmagazijn voor het
+      Federatief Berichtenstelsel
     longDescription: >-
-      Referentie-implementatie van een eigen berichtenmagazijn voor het
-      Federatief Berichtenstelsel (FBS) van Logius/BZK, inclusief een FBS
-      Client SDK. Dit project toont hoe een overheidsorganisatie een
-      FBS-compliant berichtenmagazijn kan bouwen voor het uitwisselen van
-      berichten met burgers en ondernemers.
+      Persoonlijk oefenproject voor het werken met Claude Code en de agent
+      skills van developer.overheid.nl en Logius Standaarden. Bevat een
+      referentie-implementatie van een eigen berichtenmagazijn voor het
+      Federatief Berichtenstelsel (FBS), inclusief een FBS Client SDK.
+      Dit is geen officieel product van Logius, BZK of enige andere
+      overheidsorganisatie.
     features:
       - Eigen berichtenmagazijn (FBS-compliant berichtenopslag)
       - FBS Client SDK (Kotlin-bibliotheek)
