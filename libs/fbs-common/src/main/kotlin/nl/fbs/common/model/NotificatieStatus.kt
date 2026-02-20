@@ -18,4 +18,16 @@ data class NotificatieStatus(
     val verzondenOp: Instant? = null,
     val afgeleverdOp: Instant? = null,
     val foutmelding: String? = null
-)
+) {
+    init {
+        if (status == NotificatieStatusWaarde.MISLUKT) {
+            require(!foutmelding.isNullOrBlank()) {
+                "foutmelding is verplicht bij status MISLUKT"
+            }
+        } else {
+            require(foutmelding == null) {
+                "foutmelding mag alleen gezet worden bij status MISLUKT"
+            }
+        }
+    }
+}
