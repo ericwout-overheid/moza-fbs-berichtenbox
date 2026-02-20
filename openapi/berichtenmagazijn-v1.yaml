@@ -424,7 +424,7 @@ components:
         inhoud:
           type: string
           description: Inhoud van het bericht
-        aangemaaaktOp:
+        aangemaaktOp:
           type: string
           format: date-time
           description: Tijdstip waarop het bericht is aangemaakt
@@ -462,7 +462,7 @@ components:
           description: Bestandsgrootte in bytes
           examples:
             - 102400
-        aangemaaaktOp:
+        aangemaaktOp:
           type: string
           format: date-time
           description: Tijdstip waarop de bijlage is geupload

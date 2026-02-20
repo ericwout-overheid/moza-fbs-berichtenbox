@@ -17,7 +17,7 @@ info:
     url: https://eupl.eu/1.2/nl/
 
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8084
     description: Lokale ontwikkelomgeving
 
 tags:

@@ -32,7 +32,7 @@ services:
   # MinIO - S3-compatible object storage voor berichten/bijlagen
   # ============================================================
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
     container_name: fbs-minio
     ports:
       - "9000:9000"   # API
@@ -60,6 +60,7 @@ services:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
+      set -e;
       mc alias set local http://minio:9000 minioadmin minioadmin;
       mc mb local/fbs-berichten --ignore-existing;
       echo 'Bucket fbs-berichten aangemaakt';
@@ -95,7 +96,7 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null"]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -111,6 +112,7 @@ services:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
+      set -e;
       echo 'Wacht op Kafka...' &&
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic nl.fbs.bericht-ontvangen --partitions 3 --replication-factor 1 &&
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic nl.fbs.bericht-gelezen --partitions 3 --replication-factor 1 &&
@@ -125,7 +127,7 @@ services:
   # UI: http://localhost:16686
   # ============================================================
   jaeger:
-    image: jaegertracing/all-in-one:latest
+    image: jaegertracing/all-in-one:1.64
     container_name: fbs-jaeger
     ports:
       - "16686:16686"  # Jaeger UI
@@ -134,7 +136,7 @@ services:
     environment:
       COLLECTOR_OTLP_ENABLED: "true"
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:16687/ || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:14269/ || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5

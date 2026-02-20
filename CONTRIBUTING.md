@@ -50,7 +50,7 @@ git clone https://github.com/<jouw-gebruikersnaam>/moza-fbs-berichtenbox.git
 cd moza-fbs-berichtenbox
 
 # Start infrastructuur
-docker compose up -d
+docker compose -f infrastructure/docker-compose.deps.yml up -d
 
 # Bouw het project
 ./gradlew build
@@ -84,9 +84,7 @@ We raden IntelliJ IDEA aan met de Kotlin-plugin. Import het project als Gradle-p
 ## Code stijl
 
 - Volg de officiele [Kotlin Coding Conventions](https://kotlinlang.org/docs/coding-conventions.html).
-- We gebruiken **ktlint** voor automatische code formatting.
-- Draai `./gradlew ktlintCheck` voor het indienen van een PR.
-- Draai `./gradlew ktlintFormat` om automatisch te formatteren.
+- Gebruik `kotlin.code.style=official` (geconfigureerd in `gradle.properties`).
 
 ### Aanvullende richtlijnen
 

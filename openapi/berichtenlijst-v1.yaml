@@ -16,7 +16,7 @@ info:
     url: https://eupl.eu/1.2/nl/
 
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8081
     description: Lokale ontwikkelomgeving
 
 tags:
@@ -204,7 +204,7 @@ components:
             - "Uw aanvraag is ontvangen"
         status:
           $ref: '#/components/schemas/BerichtStatus'
-        aangemaaaktOp:
+        aangemaaktOp:
           type: string
           format: date-time
           description: Tijdstip waarop het bericht is aangemaakt

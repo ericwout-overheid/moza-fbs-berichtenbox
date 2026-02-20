@@ -30,7 +30,7 @@ variables:
     key:
       files:
         - gradle/wrapper/gradle-wrapper.properties
-        - buildSrc/src/**/*.kt
+        - gradle/libs.versions.toml
       prefix: gradle
     paths:
       - .gradle/caches/
@@ -88,9 +88,9 @@ lint:openapi:
   image: node:20-alpine
   script:
     - npm install -g @stoplight/spectral-cli
-    - echo "TODO - OpenAPI specs linting met Spectral"
-    # - spectral lint api/openapi/*.yaml --ruleset api/.spectral.yml
-  allow_failure: true
+    - echo "TODO - OpenAPI specs linting met Spectral (Fase 1)"
+    # - spectral lint openapi/*.yaml --ruleset .spectral.yml
+  allow_failure: true  # TODO: verwijder wanneer Spectral linting is geconfigureerd
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -107,7 +107,7 @@ lint:openapi:
     DOCKER_TLS_CERTDIR: "/certs"
     IMAGE_TAG: "$CI_REGISTRY_IMAGE/$SERVICE_NAME:$CI_COMMIT_SHORT_SHA"
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - echo "TODO - Docker build voor $SERVICE_NAME (Fase 7)"
     # - docker build -t $IMAGE_TAG services/$SERVICE_NAME/
@@ -116,51 +116,60 @@ lint:openapi:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 # Placeholder jobs per service - uncomment in Fase 7
-# docker:bericht-service:
+# docker:berichtenmagazijn:
 #   extends: .docker-build
 #   variables:
-#     SERVICE_NAME: bericht-service
+#     SERVICE_NAME: berichtenmagazijn
 
-# docker:notificatie-service:
+# docker:berichtenlijst:
 #   extends: .docker-build
 #   variables:
-#     SERVICE_NAME: notificatie-service
+#     SERVICE_NAME: berichtenlijst
 
-# docker:abonnement-service:
+# docker:notificatie:
 #   extends: .docker-build
 #   variables:
-#     SERVICE_NAME: abonnement-service
+#     SERVICE_NAME: notificatie
 
-# docker:api-gateway:
+# docker:notificatieprofiel:
 #   extends: .docker-build
 #   variables:
-#     SERVICE_NAME: api-gateway
+#     SERVICE_NAME: notificatieprofiel
+
+# docker:digitale-bereikbaarheid:
+#   extends: .docker-build
+#   variables:
+#     SERVICE_NAME: digitale-bereikbaarheid
+
+# docker:admin-dashboard:
+#   extends: .docker-build
+#   variables:
+#     SERVICE_NAME: admin-dashboard
 
 # ---------------------------------------------------------------------------
 # Deploy stage - Kubernetes deployment (Fase 7)
 # ---------------------------------------------------------------------------
-deploy:staging:
-  stage: deploy
-  image: bitnami/kubectl:latest
-  script:
-    - echo "TODO - Deploy naar staging K8s cluster (Fase 7)"
-    # - kubectl apply -k infrastructure/k8s/overlays/staging/
-  environment:
-    name: staging
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: manual
+# Deploy jobs - placeholder tot Fase 7 (Helm charts nog niet aanwezig)
+# deploy:staging:
+#   stage: deploy
+#   image: bitnami/kubectl:latest
+#   script:
+#     - kubectl apply -k infrastructure/k8s/overlays/staging/
+#   environment:
+#     name: staging
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#       when: manual
 
-deploy:production:
-  stage: deploy
-  image: bitnami/kubectl:latest
-  script:
-    - echo "TODO - Deploy naar productie K8s cluster (Fase 7)"
-    # - kubectl apply -k infrastructure/k8s/overlays/production/
-  environment:
-    name: production
-  needs:
-    - deploy:staging
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: manual
+# deploy:production:
+#   stage: deploy
+#   image: bitnami/kubectl:latest
+#   script:
+#     - kubectl apply -k infrastructure/k8s/overlays/production/
+#   environment:
+#     name: production
+#   needs:
+#     - deploy:staging
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#       when: manual

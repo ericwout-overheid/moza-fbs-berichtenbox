@@ -1,8 +1,7 @@
 package nl.fbs.client
 
 /**
- * FBS Client SDK - HTTP client for communicating with FBS services.
- * Uses java.net.http.HttpClient under the hood.
+ * FBS Client SDK - client library for communicating with FBS services.
  */
 class FbsClient {
     // Placeholder - implementation follows

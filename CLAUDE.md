@@ -29,7 +29,7 @@ services/              # Quarkus microservices
   admin-dashboard/     # Beheer-UI (port 8085)
 
 openapi/               # OpenAPI 3.1 specs (contract-first)
-infrastructure/        # Docker Compose, Helm charts
+infrastructure/        # Docker Compose
 docs/                  # Documentatie en plannen
 ```
 

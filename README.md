@@ -74,7 +74,7 @@ git clone https://github.com/ericwout-overheid/moza-fbs-berichtenbox.git
 cd moza-fbs-berichtenbox
 
 # Start de infrastructuur (PostgreSQL, MinIO, Kafka)
-docker compose up -d
+docker compose -f infrastructure/docker-compose.deps.yml up -d
 
 # Bouw het project
 ./gradlew build
