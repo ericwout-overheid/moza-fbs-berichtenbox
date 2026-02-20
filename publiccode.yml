@@ -1,0 +1,63 @@
+publiccodeYmlVersion: "0.4"
+
+name: Federatief Berichtenstelsel - Referentie-Implementatie
+url: "https://github.com/ericwout-overheid/moza-fbs-berichtenbox"
+landingURL: "https://github.com/ericwout-overheid/moza-fbs-berichtenbox"
+
+softwareType: standalone/backend
+
+platforms:
+  - linux
+
+categories:
+  - communications
+  - it-development
+
+developmentStatus: development
+
+description:
+  nl:
+    shortDescription: >-
+      Referentie-implementatie eigen berichtenmagazijn voor het Federatief
+      Berichtenstelsel
+    longDescription: >-
+      Referentie-implementatie van een eigen berichtenmagazijn voor het
+      Federatief Berichtenstelsel (FBS) van Logius/BZK, inclusief een FBS
+      Client SDK. Dit project toont hoe een overheidsorganisatie een
+      FBS-compliant berichtenmagazijn kan bouwen voor het uitwisselen van
+      berichten met burgers en ondernemers.
+    features:
+      - Eigen berichtenmagazijn (FBS-compliant berichtenopslag)
+      - FBS Client SDK (Kotlin-bibliotheek)
+      - NLGov API Design Rules compliant
+      - FSC (Federated Service Connectivity) via OpenFSC
+      - LDV (Logboek Dataverwerkingen) audit logging
+      - CloudEvents NL GOV profiel voor notificaties
+      - Haven/Kubernetes deployment ready
+
+legal:
+  license: EUPL-1.2
+  mainCopyrightOwner: Moza
+
+maintenance:
+  type: internal
+  contacts:
+    - name: Projectteam FBS
+      email: info@example.nl
+
+localisation:
+  localisationReady: false
+  availableLanguages:
+    - nl
+
+intendedAudience:
+  countries:
+    - nl
+  scope:
+    - government
+
+inputTypes:
+  - application/json
+
+outputTypes:
+  - application/json

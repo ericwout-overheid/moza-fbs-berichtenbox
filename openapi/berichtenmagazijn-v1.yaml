@@ -1,0 +1,578 @@
+openapi: 3.1.0
+info:
+  title: Berichtenmagazijn API
+  version: 1.0.0
+  description: >
+    API voor het opslaan, ophalen en beheren van berichten binnen het
+    Federatief Berichtenstelsel (FBS). Het berichtenmagazijn is de
+    kernopslag voor berichten aan burgers en ondernemers.
+  contact:
+    name: FBS Team
+    url: https://github.com/ericwout-overheid/moza-fbs-berichtenbox/issues
+    email: fbs@example.nl
+  license:
+    name: EUPL-1.2
+    url: https://eupl.eu/1.2/nl/
+
+servers:
+  - url: http://localhost:8080
+    description: Lokale ontwikkelomgeving
+
+tags:
+  - name: Berichten
+    description: Beheer van berichten
+  - name: Bijlagen
+    description: Beheer van bijlagen bij berichten
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/v1/berichten:
+    post:
+      operationId: maakBericht
+      summary: Maak een nieuw bericht aan
+      description: >
+        Slaat een nieuw bericht op in het magazijn. Het bericht krijgt
+        automatisch de status NIEUW en een uniek ID.
+      tags:
+        - Berichten
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BerichtAanmaakVerzoek'
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - ontvangerIdType
+                - ontvangerId
+                - onderwerp
+                - inhoud
+              properties:
+                ontvangerIdType:
+                  $ref: '#/components/schemas/OntvangerIdType'
+                ontvangerId:
+                  type: string
+                  description: Identificatie van de ontvanger
+                onderwerp:
+                  type: string
+                  description: Onderwerp van het bericht
+                inhoud:
+                  type: string
+                  description: Inhoud van het bericht
+                bijlagen:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Bijlagen bij het bericht
+      responses:
+        '201':
+          description: Bericht succesvol aangemaakt
+          headers:
+            API-Version:
+              $ref: '#/components/headers/API-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bericht'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      operationId: lijstBerichten
+      summary: Haal een lijst van berichten op
+      description: >
+        Haalt een gepagineerde lijst van berichten op, optioneel gefilterd
+        op ontvanger en status.
+      tags:
+        - Berichten
+      parameters:
+        - name: ontvangerIdType
+          in: query
+          schema:
+            $ref: '#/components/schemas/OntvangerIdType'
+          description: Type identificatie van de ontvanger
+        - name: ontvangerId
+          in: query
+          schema:
+            type: string
+          description: Identificatie van de ontvanger
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/BerichtStatus'
+          description: Filter op berichtstatus
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          description: Gepagineerde lijst van berichten
+          headers:
+            API-Version:
+              $ref: '#/components/headers/API-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BerichtenPagina'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/berichten/{berichtId}:
+    get:
+      operationId: haalBericht
+      summary: Haal een enkel bericht op
+      description: >
+        Haalt een volledig bericht op inclusief inhoud op basis van het
+        bericht-ID.
+      tags:
+        - Berichten
+      parameters:
+        - $ref: '#/components/parameters/berichtId'
+      responses:
+        '200':
+          description: Het opgevraagde bericht
+          headers:
+            API-Version:
+              $ref: '#/components/headers/API-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bericht'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      operationId: werkBerichtBij
+      summary: Werk de status van een bericht bij
+      description: >
+        Wijzigt de status van een bestaand bericht, bijvoorbeeld van
+        NIEUW naar GELEZEN of GEARCHIVEERD.
+      tags:
+        - Berichten
+      parameters:
+        - $ref: '#/components/parameters/berichtId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BerichtStatusWijziging'
+      responses:
+        '200':
+          description: Bericht succesvol bijgewerkt
+          headers:
+            API-Version:
+              $ref: '#/components/headers/API-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bericht'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      operationId: verwijderBericht
+      summary: Verwijder een bericht
+      description: Verwijdert een bericht permanent uit het magazijn.
+      tags:
+        - Berichten
+      parameters:
+        - $ref: '#/components/parameters/berichtId'
+      responses:
+        '204':
+          description: Bericht succesvol verwijderd
+          headers:
+            API-Version:
+              $ref: '#/components/headers/API-Version'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/berichten/{berichtId}/bijlagen:
+    get:
+      operationId: lijstBijlagen
+      summary: Haal bijlagen van een bericht op
+      description: >
+        Haalt een lijst op van alle bijlagen (metadata) die bij een
+        bericht horen.
+      tags:
+        - Bijlagen
+      parameters:
+        - $ref: '#/components/parameters/berichtId'
+      responses:
+        '200':
+          description: Lijst van bijlagemetadata
+          headers:
+            API-Version:
+              $ref: '#/components/headers/API-Version'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BijlageMetadata'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      operationId: uploadBijlage
+      summary: Voeg een bijlage toe aan een bericht
+      description: >
+        Upload een bestand als bijlage bij een bestaand bericht via
+        multipart/form-data.
+      tags:
+        - Bijlagen
+      parameters:
+        - $ref: '#/components/parameters/berichtId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - bestand
+              properties:
+                bestand:
+                  type: string
+                  format: binary
+                  description: Het te uploaden bestand
+      responses:
+        '201':
+          description: Bijlage succesvol geupload
+          headers:
+            API-Version:
+              $ref: '#/components/headers/API-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BijlageMetadata'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT-token voor authenticatie
+
+  headers:
+    API-Version:
+      description: Volledige semver-versie van de API
+      schema:
+        type: string
+        example: 1.0.0
+
+  parameters:
+    berichtId:
+      name: berichtId
+      in: path
+      required: true
+      description: Uniek ID van het bericht
+      schema:
+        type: string
+        format: uuid
+
+    page:
+      name: page
+      in: query
+      description: Paginanummer (begint bij 1)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    pageSize:
+      name: pageSize
+      in: query
+      description: Aantal resultaten per pagina (maximaal 100)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  schemas:
+    OntvangerIdType:
+      type: string
+      enum:
+        - BSN
+        - RSIN
+        - KVK
+      description: Type identificatie van de ontvanger
+
+    BerichtStatus:
+      type: string
+      enum:
+        - NIEUW
+        - GELEZEN
+        - GEARCHIVEERD
+      description: Status van een bericht
+
+    BerichtAanmaakVerzoek:
+      type: object
+      required:
+        - ontvangerIdType
+        - ontvangerId
+        - onderwerp
+        - inhoud
+      properties:
+        ontvangerIdType:
+          $ref: '#/components/schemas/OntvangerIdType'
+        ontvangerId:
+          type: string
+          description: Identificatie van de ontvanger
+          examples:
+            - "999999999"
+        onderwerp:
+          type: string
+          description: Onderwerp van het bericht
+          maxLength: 500
+          examples:
+            - "Uw aanvraag is ontvangen"
+        inhoud:
+          type: string
+          description: Inhoud van het bericht
+          examples:
+            - "Beste inwoner, wij hebben uw aanvraag ontvangen."
+
+    BerichtStatusWijziging:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - GELEZEN
+            - GEARCHIVEERD
+          description: Nieuwe status van het bericht
+
+    Bericht:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Uniek ID van het bericht
+        afzenderOin:
+          type: string
+          description: OIN van de afzendende organisatie
+          examples:
+            - "00000001234567890000"
+        ontvangerIdType:
+          $ref: '#/components/schemas/OntvangerIdType'
+        ontvangerId:
+          type: string
+          description: Identificatie van de ontvanger
+        onderwerp:
+          type: string
+          description: Onderwerp van het bericht
+        status:
+          $ref: '#/components/schemas/BerichtStatus'
+        inhoud:
+          type: string
+          description: Inhoud van het bericht
+        aangemaaaktOp:
+          type: string
+          format: date-time
+          description: Tijdstip waarop het bericht is aangemaakt
+        gelezenOp:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Tijdstip waarop het bericht is gelezen (null indien nog niet gelezen)
+        bijlagen:
+          type: array
+          items:
+            $ref: '#/components/schemas/BijlageMetadata'
+          description: Lijst van bijlagen bij het bericht
+
+    BijlageMetadata:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Uniek ID van de bijlage
+        bestandsnaam:
+          type: string
+          description: Naam van het bestand
+          examples:
+            - "beschikking.pdf"
+        mediaType:
+          type: string
+          description: MIME-type van het bestand
+          examples:
+            - "application/pdf"
+        grootte:
+          type: integer
+          description: Bestandsgrootte in bytes
+          examples:
+            - 102400
+        aangemaaaktOp:
+          type: string
+          format: date-time
+          description: Tijdstip waarop de bijlage is geupload
+
+    BerichtenPagina:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bericht'
+          description: Lijst van berichten op deze pagina
+        page:
+          type: integer
+          description: Huidig paginanummer
+          examples:
+            - 1
+        pageSize:
+          type: integer
+          description: Aantal resultaten per pagina
+          examples:
+            - 20
+        totalPages:
+          type: integer
+          description: Totaal aantal pagina's
+          examples:
+            - 5
+        totalElements:
+          type: integer
+          description: Totaal aantal berichten
+          examples:
+            - 97
+
+    ProblemDetail:
+      type: object
+      description: Foutrespons conform RFC 9457 (Problem Details for HTTP APIs)
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI die het type fout identificeert
+          examples:
+            - "https://example.com/fouten/niet-gevonden"
+        title:
+          type: string
+          description: Korte samenvatting van het probleem
+          examples:
+            - "Bericht niet gevonden"
+        status:
+          type: integer
+          description: HTTP-statuscode
+          examples:
+            - 404
+        detail:
+          type: string
+          description: Gedetailleerde uitleg van het probleem
+          examples:
+            - "Het bericht met ID '550e8400-e29b-41d4-a716-446655440000' bestaat niet."
+        instance:
+          type: string
+          format: uri
+          description: URI die het specifieke voorkomen van het probleem identificeert
+
+  responses:
+    BadRequest:
+      description: Ongeldig verzoek
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    Unauthorized:
+      description: Niet geauthenticeerd
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    Forbidden:
+      description: Niet geautoriseerd
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    NotFound:
+      description: Resource niet gevonden
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    InternalServerError:
+      description: Interne serverfout
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'

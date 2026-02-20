@@ -1,0 +1,166 @@
+# Federatief Berichtenstelsel - GitLab CI/CD Pipeline
+#
+# Stages:
+#   build  - Compileer alle modules
+#   test   - Unit tests en integratie tests
+#   lint   - OpenAPI spec linting
+#   docker - Docker images bouwen (Fase 7)
+#   deploy - Deploy naar Kubernetes (Fase 7)
+
+stages:
+  - build
+  - test
+  - lint
+  - docker
+  - deploy
+
+# ---------------------------------------------------------------------------
+# Globale variabelen
+# ---------------------------------------------------------------------------
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.caching=true"
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+  JAVA_HOME: "/opt/java/openjdk"
+
+# ---------------------------------------------------------------------------
+# Cache: Gradle dependencies tussen builds
+# ---------------------------------------------------------------------------
+.gradle-cache: &gradle-cache
+  cache:
+    key:
+      files:
+        - gradle/wrapper/gradle-wrapper.properties
+        - buildSrc/src/**/*.kt
+      prefix: gradle
+    paths:
+      - .gradle/caches/
+      - .gradle/wrapper/
+      - .gradle/notifications/
+    policy: pull-push
+
+# ---------------------------------------------------------------------------
+# Build stage
+# ---------------------------------------------------------------------------
+build:
+  stage: build
+  image: eclipse-temurin:21-jdk
+  <<: *gradle-cache
+  script:
+    - chmod +x ./gradlew
+    - ./gradlew build -x test -x check
+  artifacts:
+    paths:
+      - "**/build/"
+    expire_in: 1 hour
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ---------------------------------------------------------------------------
+# Test stage
+# ---------------------------------------------------------------------------
+test:
+  stage: test
+  image: eclipse-temurin:21-jdk
+  <<: *gradle-cache
+  needs:
+    - build
+  script:
+    - chmod +x ./gradlew
+    - ./gradlew check
+  artifacts:
+    when: always
+    paths:
+      - "**/build/reports/"
+    reports:
+      junit:
+        - "**/build/test-results/test/TEST-*.xml"
+    expire_in: 7 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ---------------------------------------------------------------------------
+# Lint stage - OpenAPI spec validatie
+# ---------------------------------------------------------------------------
+lint:openapi:
+  stage: lint
+  image: node:20-alpine
+  script:
+    - npm install -g @stoplight/spectral-cli
+    - echo "TODO - OpenAPI specs linting met Spectral"
+    # - spectral lint api/openapi/*.yaml --ruleset api/.spectral.yml
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ---------------------------------------------------------------------------
+# Docker stage - Container images bouwen (Fase 7)
+# ---------------------------------------------------------------------------
+.docker-build:
+  stage: docker
+  image: docker:24
+  services:
+    - docker:24-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+    IMAGE_TAG: "$CI_REGISTRY_IMAGE/$SERVICE_NAME:$CI_COMMIT_SHORT_SHA"
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - echo "TODO - Docker build voor $SERVICE_NAME (Fase 7)"
+    # - docker build -t $IMAGE_TAG services/$SERVICE_NAME/
+    # - docker push $IMAGE_TAG
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Placeholder jobs per service - uncomment in Fase 7
+# docker:bericht-service:
+#   extends: .docker-build
+#   variables:
+#     SERVICE_NAME: bericht-service
+
+# docker:notificatie-service:
+#   extends: .docker-build
+#   variables:
+#     SERVICE_NAME: notificatie-service
+
+# docker:abonnement-service:
+#   extends: .docker-build
+#   variables:
+#     SERVICE_NAME: abonnement-service
+
+# docker:api-gateway:
+#   extends: .docker-build
+#   variables:
+#     SERVICE_NAME: api-gateway
+
+# ---------------------------------------------------------------------------
+# Deploy stage - Kubernetes deployment (Fase 7)
+# ---------------------------------------------------------------------------
+deploy:staging:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - echo "TODO - Deploy naar staging K8s cluster (Fase 7)"
+    # - kubectl apply -k infrastructure/k8s/overlays/staging/
+  environment:
+    name: staging
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+
+deploy:production:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - echo "TODO - Deploy naar productie K8s cluster (Fase 7)"
+    # - kubectl apply -k infrastructure/k8s/overlays/production/
+  environment:
+    name: production
+  needs:
+    - deploy:staging
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual

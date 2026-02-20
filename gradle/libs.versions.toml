@@ -1,0 +1,88 @@
+[versions]
+kotlin = "2.1.10"
+quarkus = "3.17.8"
+jackson = "2.18.2"
+
+# CloudEvents
+cloudevents = "4.0.1"
+
+# MinIO
+minio = "8.5.14"
+
+# OpenTelemetry
+opentelemetry = "1.45.0"
+opentelemetry-instrumentation = "2.11.0"
+
+# Vaadin
+vaadin = "24.6.5"
+
+# Testing
+mockk = "1.13.14"
+testcontainers = "1.20.4"
+rest-assured = "5.5.0"
+
+[libraries]
+# Quarkus BOM
+quarkus-bom = { module = "io.quarkus.platform:quarkus-bom", version.ref = "quarkus" }
+
+# Quarkus extensions - REST (renamed in Quarkus 3.9+)
+quarkus-rest-jackson = { module = "io.quarkus:quarkus-rest-jackson", version.ref = "quarkus" }
+quarkus-rest-client-jackson = { module = "io.quarkus:quarkus-rest-client-jackson", version.ref = "quarkus" }
+
+# Quarkus extensions - Persistence
+quarkus-hibernate-orm-panache-kotlin = { module = "io.quarkus:quarkus-hibernate-orm-panache-kotlin", version.ref = "quarkus" }
+quarkus-jdbc-postgresql = { module = "io.quarkus:quarkus-jdbc-postgresql", version.ref = "quarkus" }
+quarkus-flyway = { module = "io.quarkus:quarkus-flyway", version.ref = "quarkus" }
+
+# Quarkus extensions - Messaging (renamed in Quarkus 3.9+)
+quarkus-messaging-kafka = { module = "io.quarkus:quarkus-messaging-kafka", version.ref = "quarkus" }
+quarkus-mailer = { module = "io.quarkus:quarkus-mailer", version.ref = "quarkus" }
+
+# Quarkus extensions - Security
+quarkus-oidc = { module = "io.quarkus:quarkus-oidc", version.ref = "quarkus" }
+
+# Quarkus extensions - Observability
+quarkus-smallrye-health = { module = "io.quarkus:quarkus-smallrye-health", version.ref = "quarkus" }
+quarkus-micrometer-registry-prometheus = { module = "io.quarkus:quarkus-micrometer-registry-prometheus", version.ref = "quarkus" }
+quarkus-smallrye-openapi = { module = "io.quarkus:quarkus-smallrye-openapi", version.ref = "quarkus" }
+
+# Quarkus extensions - Other
+quarkus-cache = { module = "io.quarkus:quarkus-cache", version.ref = "quarkus" }
+quarkus-scheduler = { module = "io.quarkus:quarkus-scheduler", version.ref = "quarkus" }
+quarkus-kotlin = { module = "io.quarkus:quarkus-kotlin", version.ref = "quarkus" }
+
+# Jackson
+jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
+
+# CloudEvents
+cloudevents-kafka = { module = "io.cloudevents:cloudevents-kafka", version.ref = "cloudevents" }
+cloudevents-json-jackson = { module = "io.cloudevents:cloudevents-json-jackson", version.ref = "cloudevents" }
+
+# MinIO
+minio = { module = "io.minio:minio", version.ref = "minio" }
+
+# OpenTelemetry
+opentelemetry-sdk = { module = "io.opentelemetry:opentelemetry-sdk", version.ref = "opentelemetry" }
+opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp", version.ref = "opentelemetry" }
+opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version.ref = "opentelemetry" }
+
+# Vaadin
+vaadin-bom = { module = "com.vaadin:vaadin-bom", version.ref = "vaadin" }
+vaadin-quarkus = { module = "com.vaadin:vaadin-quarkus" }
+vaadin-core = { module = "com.vaadin:vaadin-core" }
+
+# Testing
+quarkus-junit5 = { module = "io.quarkus:quarkus-junit5", version.ref = "quarkus" }
+quarkus-test-security = { module = "io.quarkus:quarkus-test-security", version.ref = "quarkus" }
+rest-assured-kotlin = { module = "io.rest-assured:kotlin-extensions", version.ref = "rest-assured" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql" }
+testcontainers-kafka = { module = "org.testcontainers:kafka" }
+testcontainers-minio = { module = "org.testcontainers:minio" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-allopen = { id = "org.jetbrains.kotlin.plugin.allopen", version.ref = "kotlin" }
+quarkus = { id = "io.quarkus", version.ref = "quarkus" }
