@@ -18,4 +18,10 @@ data class BijlageMetadata(
     val mediaType: String,
     val grootte: Long,
     val aangemaaktOp: Instant
-)
+) {
+    init {
+        require(bestandsnaam.isNotBlank()) { "bestandsnaam mag niet leeg zijn" }
+        require(mediaType.isNotBlank()) { "mediaType mag niet leeg zijn" }
+        require(grootte >= 0) { "grootte moet >= 0 zijn, was: $grootte" }
+    }
+}

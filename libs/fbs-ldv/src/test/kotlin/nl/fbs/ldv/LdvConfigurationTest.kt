@@ -1,10 +1,10 @@
 package nl.fbs.ldv
 
 import io.opentelemetry.sdk.OpenTelemetrySdk
+import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertNotNull
 
 class LdvConfigurationTest {
 
@@ -19,9 +19,28 @@ class LdvConfigurationTest {
     fun `sampler is altijd AlwaysOnSampler`() {
         val otel = LdvConfiguration.create()
         val tracerProvider = otel.sdkTracerProvider
-        assertNotNull(tracerProvider)
-        // AlwaysOnSampler description is "AlwaysOnSampler"
         assertEquals("AlwaysOnSampler", tracerProvider.sampler.description)
+        otel.close()
+    }
+
+    @Test
+    fun `leeg endpoint gooit exception`() {
+        assertThrows<IllegalArgumentException> {
+            LdvConfiguration.create("")
+        }
+    }
+
+    @Test
+    fun `ongeldig endpoint zonder http schema gooit exception`() {
+        assertThrows<IllegalArgumentException> {
+            LdvConfiguration.create("invalid-endpoint")
+        }
+    }
+
+    @Test
+    fun `https endpoint is geldig`() {
+        val otel = LdvConfiguration.create("https://collector.example.com:4317")
+        assertIs<OpenTelemetrySdk>(otel)
         otel.close()
     }
 }

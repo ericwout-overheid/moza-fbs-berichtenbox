@@ -1,10 +1,12 @@
 package nl.fbs.authzen
 
+import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import nl.fbs.authzen.model.EvaluationRequest
 import nl.fbs.authzen.model.EvaluationResponse
+import java.io.IOException
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -51,7 +53,10 @@ class AuthZenClient(
 
         val response = try {
             httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
-        } catch (e: Exception) {
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            throw AuthZenException("PDP-verzoek onderbroken: ${e.message}", cause = e)
+        } catch (e: IOException) {
             throw AuthZenException(
                 "Fout bij communicatie met PDP: ${e.message}",
                 cause = e
@@ -60,14 +65,14 @@ class AuthZenClient(
 
         if (response.statusCode() != 200) {
             throw AuthZenException(
-                "PDP retourneerde statuscode ${response.statusCode()}: ${response.body()}",
+                "PDP retourneerde statuscode ${response.statusCode()}",
                 statusCode = response.statusCode()
             )
         }
 
         return try {
             objectMapper.readValue<EvaluationResponse>(response.body())
-        } catch (e: Exception) {
+        } catch (e: JsonProcessingException) {
             throw AuthZenException(
                 "Fout bij verwerken PDP response: ${e.message}",
                 statusCode = response.statusCode(),
