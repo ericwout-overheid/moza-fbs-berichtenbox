@@ -50,7 +50,7 @@ federatief-berichtenstelsel/
 |---------|-------------|
 | **Berichtenmagazijn** | Kern berichtenopslag: berichten ontvangen, opslaan, doorzoeken en ophalen |
 | **Berichtenlijst** | Aggregeert berichtrecords met routering naar gedistribueerde opslaglocaties |
-| **Notificatie** | Multi-channel notificaties (e-mail, SMS, app) via CloudEvents |
+| **Notificatie** | Multi-channel notificaties (e-mail, SMS) via CloudEvents |
 | **Notificatieprofiel** | Centraal beheer van notificatievoorkeuren van ontvangers |
 | **Digitale Bereikbaarheid** | Beheer van toestemming voor digitale communicatie via FBS |
 | **Admin Dashboard** | Beheer- en monitoringinterface |
@@ -95,11 +95,8 @@ De API is beschikbaar op `http://localhost:8080/api/v1/`.
 ### Tests uitvoeren
 
 ```bash
-# Alle tests
+# Alle tests (integratietests gebruiken Testcontainers, vereist Docker)
 ./gradlew test
-
-# Integratietests (vereist Docker)
-./gradlew integrationTest
 ```
 
 ## Technologie Stack

@@ -44,7 +44,7 @@ services:
       - minio-data:/data
     command: server /data --console-address ":9001"
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/minio/health/live || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -75,7 +75,7 @@ services:
     image: apache/kafka:3.7.0
     container_name: fbs-kafka
     ports:
-      - "9092:9092"
+      - "29092:29092"  # External listener (host access)
     environment:
       # KRaft configuratie
       KAFKA_NODE_ID: 1
@@ -83,20 +83,20 @@ services:
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       # Listener configuratie
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       # Cluster configuratie
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      # Auto-create topics
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      # Disable auto-create: topics worden expliciet aangemaakt door kafka-init
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
     volumes:
       - kafka-data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null"]
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server kafka:9092 > /dev/null"]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -113,11 +113,15 @@ services:
     entrypoint: >
       /bin/sh -c "
       set -e;
-      echo 'Wacht op Kafka...' &&
+      echo 'Kafka topics aanmaken...' &&
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic nl.fbs.bericht-ontvangen --partitions 3 --replication-factor 1 &&
+      echo '  nl.fbs.bericht-ontvangen OK' &&
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic nl.fbs.bericht-gelezen --partitions 3 --replication-factor 1 &&
+      echo '  nl.fbs.bericht-gelezen OK' &&
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic nl.fbs.bericht-verwijderd --partitions 3 --replication-factor 1 &&
+      echo '  nl.fbs.bericht-verwijderd OK' &&
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic nl.fbs.notificatie-verzonden --partitions 3 --replication-factor 1 &&
+      echo '  nl.fbs.notificatie-verzonden OK' &&
       echo 'Alle topics aangemaakt'
       "
     restart: "no"

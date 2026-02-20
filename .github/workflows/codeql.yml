@@ -45,7 +45,7 @@ jobs:
 
       - name: Setup Gradle
         if: matrix.language == 'java-kotlin'
-        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972ac30046fa1d90a0b2 # v4.4.1
+        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@ce28f5bb42b7a9f2c824e633a3f6ee835bab0761 # v3.28.0

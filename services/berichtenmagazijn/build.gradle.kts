@@ -29,6 +29,7 @@ dependencies {
     testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.testcontainers.kafka)
+    testImplementation(libs.testcontainers.minio)
     testImplementation(libs.testcontainers.junit.jupiter)
 }
 
