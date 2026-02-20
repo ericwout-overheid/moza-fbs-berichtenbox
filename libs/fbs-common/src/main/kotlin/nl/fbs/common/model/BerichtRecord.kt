@@ -4,9 +4,10 @@ import java.time.Instant
 import java.util.UUID
 
 /**
- * Lichtgewicht berichtrecord voor de berichtenlijst.
+ * Lichtgewicht berichtrecord voor de berichtenlijst-service.
  *
- * Bevat alleen metadata, niet de volledige inhoud van het bericht.
+ * Aggregeert metadata uit meerdere berichtenmagazijnen. Bevat alleen metadata
+ * en de bronlocatie, niet de volledige inhoud (zie [Bericht] voor het volledige model).
  *
  * @property berichtId identifier van het bericht in het bronmagazijn
  * @property afzenderOin OIN van de afzender

@@ -35,7 +35,7 @@ class AuthZenClient(
      * @param request het evaluatieverzoek
      * @param traceparent optionele W3C traceparent header voor tracing
      * @return de evaluatierespons met de autorisatiebeslissing
-     * @throws AuthZenException bij communicatiefouten of onverwachte responses
+     * @throws AuthZenException bij verbindingsfouten (statusCode is null), onverwachte HTTP-statuscodes, of ongeldige JSON in de response
      */
     fun evaluate(request: EvaluationRequest, traceparent: String? = null): EvaluationResponse {
         val requestBody = objectMapper.writeValueAsString(request)

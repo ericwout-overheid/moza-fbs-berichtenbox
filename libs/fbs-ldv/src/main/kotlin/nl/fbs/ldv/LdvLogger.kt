@@ -12,7 +12,9 @@ import io.opentelemetry.api.trace.StatusCode
 class LdvLogger(private val spanBuilder: LdvSpanBuilder) {
 
     /**
-     * Logt een dataverwerking als een afgeronde span.
+     * Logt een dataverwerking als een punt-gebeurtenis (span met directe start en einde).
+     *
+     * Gebruik [withinVerwerking] als de verwerking een codeblok omvat.
      *
      * @param verwerking de te loggen dataverwerking
      */
