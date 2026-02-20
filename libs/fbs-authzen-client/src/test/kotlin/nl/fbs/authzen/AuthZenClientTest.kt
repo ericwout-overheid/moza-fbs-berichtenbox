@@ -13,7 +13,9 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class AuthZenClientTest {
@@ -46,7 +48,21 @@ class AuthZenClientTest {
         client.evaluate(createRequest(), traceparent = "00-trace-span-01")
 
         verify { httpClient.send(capture(requestSlot), any<HttpResponse.BodyHandler<String>>()) }
-        assertTrue(requestSlot.captured.headers().firstValue("traceparent").isPresent)
+        assertEquals(
+            "00-trace-span-01",
+            requestSlot.captured.headers().firstValue("traceparent").get()
+        )
+    }
+
+    @Test
+    fun `ongeldige JSON response gooit AuthZenException`() {
+        mockResponse(200, "dit is geen geldige json")
+
+        val exception = assertThrows<AuthZenException> {
+            client.evaluate(createRequest())
+        }
+        assertEquals(200, exception.statusCode)
+        assertNotNull(exception.cause)
     }
 
     @Test
