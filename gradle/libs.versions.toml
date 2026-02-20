@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.1.10"
+kotlin = "2.2.20"
 quarkus = "3.17.8"
 jackson = "2.21.0"
 
@@ -19,7 +19,7 @@ vaadin = "24.6.5"
 # Testing
 mockk = "1.13.14"
 testcontainers = "1.20.4"
-rest-assured = "5.5.0"
+rest-assured = "6.0.0"
 
 [libraries]
 # Quarkus BOM
@@ -65,6 +65,7 @@ minio = { module = "io.minio:minio", version.ref = "minio" }
 opentelemetry-sdk = { module = "io.opentelemetry:opentelemetry-sdk", version.ref = "opentelemetry" }
 opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp", version.ref = "opentelemetry" }
 opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version.ref = "opentelemetry" }
+opentelemetry-sdk-testing = { module = "io.opentelemetry:opentelemetry-sdk-testing", version.ref = "opentelemetry" }
 
 # Vaadin
 vaadin-bom = { module = "com.vaadin:vaadin-bom", version.ref = "vaadin" }
