@@ -35,8 +35,8 @@ docs/                  # Documentatie en plannen
 
 ## Build Commands
 ```bash
-# Volledige build (vereist JDK 21)
-JAVA_HOME=~/.jdks/ms-21.0.10 ./gradlew build
+# Volledige build (vereist JDK 21+)
+./gradlew build
 
 # Eén module bouwen
 ./gradlew :services:berichtenmagazijn:build
@@ -55,12 +55,30 @@ JAVA_HOME=~/.jdks/ms-21.0.10 ./gradlew build
 docker compose -f infrastructure/docker-compose.deps.yml up -d
 ```
 
+## Lokale Ontwikkeling
+Dependencies starten met `docker compose -f infrastructure/docker-compose.deps.yml up -d`:
+- **PostgreSQL**: `localhost:5432` (user: `fbs`, pass: `fbs`, db: `fbs`)
+- **Kafka**: `localhost:29092` (KRaft, geen Zookeeper)
+- **MinIO**: API `localhost:9000`, Console `localhost:9001` (user: `minioadmin`)
+- **Jaeger**: UI `localhost:16686`, OTLP `localhost:4317`
+
+Kafka topics worden automatisch aangemaakt door `kafka-init` container.
+
 ## Conventies
 - **API-first**: OpenAPI specs in `openapi/` zijn de bron van waarheid
 - **NLGov ADR**: lowerCamelCase, geen trailing slashes, application/problem+json, API-Version header
 - **LDV**: OpenTelemetry, OTLP protocol, **geen sampling**
 - **Taal**: Nederlands voor API velden en documentatie
 - **Tests**: JUnit 5, Testcontainers, MockK
+- **Package**: `nl.rijksoverheid.moz.*`
+- **DB migraties**: Flyway, scripts in `src/main/resources/db/migration/`
+- **Admin UI**: Vaadin (admin-dashboard service)
+
+## Gotchas
+- **allOpen plugin**: Quarkus vereist `allOpen` voor `@Path`, `@ApplicationScoped`, `@Entity`, `@QuarkusTest` - al geconfigureerd per service `build.gradle.kts`
+- **Kafka port**: Externe port is `29092` (niet `9092`), `9092` is intern Docker-netwerk
+- **JAVA_HOME**: Vereist JDK 21+. SDKs staan in `~/.jdks/`. Stel `JAVA_HOME` in als `java` niet op PATH staat
+- **Version catalog**: Alle dependency versies in `gradle/libs.versions.toml` (bron van waarheid voor versies)
 
 ## Relevante Standaarden
 - **FSC** - Federated Service Connectivity (mTLS, contracten)
