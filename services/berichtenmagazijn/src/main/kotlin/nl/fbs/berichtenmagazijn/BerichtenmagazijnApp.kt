@@ -6,6 +6,4 @@ package nl.fbs.berichtenmagazijn
  * Stores and manages messages (berichten) including documents/attachments.
  * Provides REST API for message CRUD operations.
  */
-class BerichtenmagazijnApp {
-    // Placeholder - Quarkus will bootstrap via CDI
-}
+class BerichtenmagazijnApp

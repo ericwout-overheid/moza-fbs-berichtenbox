@@ -3,8 +3,6 @@ package nl.fbs.notificatieprofiel
 /**
  * Notificatieprofiel - notification preferences service for FBS.
  *
- * Manages user notification preferences and channel configurations.
+ * Manages notification preferences and channel configurations per recipient.
  */
-class NotificatieprofielApp {
-    // Placeholder - Quarkus will bootstrap via CDI
-}
+class NotificatieprofielApp

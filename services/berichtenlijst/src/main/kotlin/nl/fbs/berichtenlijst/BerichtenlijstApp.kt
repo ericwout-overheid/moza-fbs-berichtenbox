@@ -1,10 +1,8 @@
 package nl.fbs.berichtenlijst
 
 /**
- * Berichtenlijst - message listing/inbox service for FBS.
+ * Berichtenlijst - aggregated message list and search service for FBS.
  *
- * Provides paginated, filtered, and cached message list views.
+ * Provides a lightweight overview of messages across berichtenmagazijnen.
  */
-class BerichtenlijstApp {
-    // Placeholder - Quarkus will bootstrap via CDI
-}
+class BerichtenlijstApp
