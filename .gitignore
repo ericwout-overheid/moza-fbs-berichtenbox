@@ -56,3 +56,4 @@ infrastructure/data/
 **/minio-data/
 **/postgres-data/
 **/kafka-data/
+.worktrees/
