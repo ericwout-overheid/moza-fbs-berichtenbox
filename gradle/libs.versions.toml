@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.1.10"
-quarkus = "3.17.8"
+quarkus = "3.31.4"
 jackson = "2.21.0"
 
 # CloudEvents
