@@ -1,6 +1,7 @@
 # Federatief Berichtenstelsel - Referentie-Implementatie
 
 [![CI](https://github.com/ericwout-overheid/moza-fbs-berichtenbox/actions/workflows/ci.yml/badge.svg)](https://github.com/ericwout-overheid/moza-fbs-berichtenbox/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/ericwout-overheid/moza-fbs-berichtenbox/badge)](https://scorecard.dev/viewer/?uri=github.com/ericwout-overheid/moza-fbs-berichtenbox)
 [![License: EUPL 1.2](https://img.shields.io/badge/License-EUPL%201.2-blue.svg)](LICENSE)
 
 > **Persoonlijk oefenproject** -- Dit is een persoonlijk leerproject om ervaring op te doen met

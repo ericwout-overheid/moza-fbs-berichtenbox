@@ -1,0 +1,46 @@
+# CI - Build and test
+# Runs on every push and pull request to main.
+
+name: CI
+
+permissions: read-all
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972ac30046fa1d90a0b2 # v4.4.1
+
+      - name: Build
+        run: ./gradlew build -x test -x check
+
+      - name: Test
+        run: ./gradlew check
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8bb81d11e4c7120548ab # v4.6.2
+        with:
+          name: test-reports
+          path: "**/build/reports/"
+          retention-days: 7
