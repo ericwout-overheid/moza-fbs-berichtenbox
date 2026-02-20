@@ -1,0 +1,323 @@
+openapi: 3.1.0
+info:
+  title: Berichtenlijst API
+  version: 1.0.0
+  description: >
+    API voor het ophalen van een geaggregeerde berichtenlijst binnen het
+    Federatief Berichtenstelsel (FBS). Biedt een lichtgewicht overzicht
+    van berichten aan een ontvanger, zonder de volledige inhoud, en
+    ondersteunt zoekfunctionaliteit.
+  contact:
+    name: FBS Team
+    url: https://github.com/ericwout-overheid/moza-fbs-berichtenbox/issues
+    email: fbs@example.nl
+  license:
+    name: EUPL-1.2
+    url: https://eupl.eu/1.2/nl/
+
+servers:
+  - url: http://localhost:8081
+    description: Lokale ontwikkelomgeving
+
+tags:
+  - name: Berichtenlijst
+    description: Geaggregeerde berichtenlijst en zoekfunctionaliteit
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/v1/berichtenlijst:
+    get:
+      operationId: haalBerichtenlijst
+      summary: Haal de geaggregeerde berichtenlijst op
+      description: >
+        Haalt een gepagineerde, geaggregeerde lijst van berichten op voor
+        een specifieke ontvanger. Bevat alleen metadata, geen inhoud.
+      tags:
+        - Berichtenlijst
+      parameters:
+        - name: ontvangerIdType
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/OntvangerIdType'
+          description: Type identificatie van de ontvanger
+        - name: ontvangerId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Identificatie van de ontvanger
+          examples:
+            - "999999999"
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          description: Gepagineerde berichtenlijst
+          headers:
+            API-Version:
+              $ref: '#/components/headers/API-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BerichtRecordPagina'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/berichtenlijst/zoek:
+    get:
+      operationId: zoekBerichten
+      summary: Zoek in berichten
+      description: >
+        Doorzoekt berichten van een ontvanger op basis van een zoekterm.
+        Zoekt in onderwerp en andere metadata.
+      tags:
+        - Berichtenlijst
+      parameters:
+        - name: ontvangerIdType
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/OntvangerIdType'
+          description: Type identificatie van de ontvanger
+        - name: ontvangerId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Identificatie van de ontvanger
+        - name: zoekterm
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+          description: Zoekterm om berichten mee te doorzoeken
+          examples:
+            - "belastingaanslag"
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          description: Gepagineerde zoekresultaten
+          headers:
+            API-Version:
+              $ref: '#/components/headers/API-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BerichtRecordPagina'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT-token voor authenticatie
+
+  headers:
+    API-Version:
+      description: Volledige semver-versie van de API
+      schema:
+        type: string
+        example: 1.0.0
+
+  parameters:
+    page:
+      name: page
+      in: query
+      description: Paginanummer (begint bij 1)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    pageSize:
+      name: pageSize
+      in: query
+      description: Aantal resultaten per pagina (maximaal 100)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  schemas:
+    OntvangerIdType:
+      type: string
+      enum:
+        - BSN
+        - RSIN
+        - KVK
+      description: Type identificatie van de ontvanger
+
+    BerichtStatus:
+      type: string
+      enum:
+        - NIEUW
+        - GELEZEN
+        - GEARCHIVEERD
+      description: Status van een bericht
+
+    BerichtRecord:
+      type: object
+      description: >
+        Lichtgewicht weergave van een bericht, zonder inhoud. Bevat een
+        verwijzing naar het magazijn waar het volledige bericht kan worden
+        opgehaald.
+      properties:
+        berichtId:
+          type: string
+          format: uuid
+          description: Uniek ID van het bericht
+        afzenderOin:
+          type: string
+          description: OIN van de afzendende organisatie
+          examples:
+            - "00000001234567890000"
+        afzenderNaam:
+          type: string
+          description: Naam van de afzendende organisatie
+          examples:
+            - "Belastingdienst"
+        onderwerp:
+          type: string
+          description: Onderwerp van het bericht
+          examples:
+            - "Uw aanvraag is ontvangen"
+        status:
+          $ref: '#/components/schemas/BerichtStatus'
+        aangemaaktOp:
+          type: string
+          format: date-time
+          description: Tijdstip waarop het bericht is aangemaakt
+        gelezenOp:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Tijdstip waarop het bericht is gelezen (null indien nog niet gelezen)
+        magazijnUrl:
+          type: string
+          format: uri
+          description: URL waar het volledige bericht kan worden opgehaald
+          examples:
+            - "https://magazijn.fbs.overheid.nl/api/v1/berichten/550e8400-e29b-41d4-a716-446655440000"
+
+    BerichtRecordPagina:
+      type: object
+      description: Gepagineerde lijst van berichtrecords
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BerichtRecord'
+          description: Lijst van berichtrecords op deze pagina
+        page:
+          type: integer
+          description: Huidig paginanummer
+          examples:
+            - 1
+        pageSize:
+          type: integer
+          description: Aantal resultaten per pagina
+          examples:
+            - 20
+        totalPages:
+          type: integer
+          description: Totaal aantal pagina's
+          examples:
+            - 5
+        totalElements:
+          type: integer
+          description: Totaal aantal berichten
+          examples:
+            - 97
+
+    ProblemDetail:
+      type: object
+      description: Foutrespons conform RFC 9457 (Problem Details for HTTP APIs)
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI die het type fout identificeert
+          examples:
+            - "https://example.com/fouten/ongeldig-verzoek"
+        title:
+          type: string
+          description: Korte samenvatting van het probleem
+          examples:
+            - "Ongeldig verzoek"
+        status:
+          type: integer
+          description: HTTP-statuscode
+          examples:
+            - 400
+        detail:
+          type: string
+          description: Gedetailleerde uitleg van het probleem
+          examples:
+            - "De parameter 'ontvangerId' is verplicht."
+        instance:
+          type: string
+          format: uri
+          description: URI die het specifieke voorkomen van het probleem identificeert
+
+  responses:
+    BadRequest:
+      description: Ongeldig verzoek
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    Unauthorized:
+      description: Niet geauthenticeerd
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    Forbidden:
+      description: Niet geautoriseerd
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    InternalServerError:
+      description: Interne serverfout
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'

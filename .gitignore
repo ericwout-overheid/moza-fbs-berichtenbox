@@ -25,9 +25,34 @@ build/
 *.o
 *.so
 
+# Gradle
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# Quarkus
+.quarkus/
+
+# Kotlin
+*.class
+
+# Vaadin
+node_modules/
+frontend/generated/
+vite.generated.ts
+
 # Certificates (nooit committen)
 *.pem
 *.key
 *.crt
 *.p12
 *.jks
+
+# Docker
+docker-compose.override.yml
+
+# Docker volumes / lokale data
+infrastructure/data/
+**/minio-data/
+**/postgres-data/
+**/kafka-data/

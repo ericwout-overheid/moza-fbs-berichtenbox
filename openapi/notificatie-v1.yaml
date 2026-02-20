@@ -1,0 +1,314 @@
+openapi: 3.1.0
+info:
+  title: Notificatie API
+  version: 1.0.0
+  description: >
+    API voor het versturen en opvolgen van notificaties binnen het
+    Federatief Berichtenstelsel (FBS). Ondersteunt het verzenden van
+    notificaties via e-mail en SMS en het opvragen van de afleveringsstatus.
+  contact:
+    name: FBS Team
+    url: https://github.com/ericwout-overheid/moza-fbs-berichtenbox/issues
+    email: fbs@example.nl
+  license:
+    name: EUPL-1.2
+    url: https://eupl.eu/1.2/nl/
+
+servers:
+  - url: http://localhost:8082
+    description: Lokale ontwikkelomgeving
+
+tags:
+  - name: Notificaties
+    description: Versturen en opvragen van notificaties
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/v1/notificaties:
+    post:
+      operationId: verstuurNotificatie
+      summary: Verstuur een notificatie
+      description: >
+        Verstuurt handmatig een notificatie naar een ontvanger via het
+        opgegeven kanaal (e-mail of SMS). De notificatie wordt asynchroon
+        verwerkt en krijgt initieel de status AANGEMAAKT.
+      tags:
+        - Notificaties
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificatieVerzoek'
+      responses:
+        '202':
+          description: Notificatie geaccepteerd voor verzending
+          headers:
+            API-Version:
+              $ref: '#/components/headers/API-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notificatie'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/notificaties/{notificatieId}/status:
+    get:
+      operationId: haalNotificatieStatus
+      summary: Haal de afleveringsstatus van een notificatie op
+      description: >
+        Haalt de huidige afleveringsstatus op van een eerder verstuurde
+        notificatie.
+      tags:
+        - Notificaties
+      parameters:
+        - $ref: '#/components/parameters/notificatieId'
+      responses:
+        '200':
+          description: De huidige status van de notificatie
+          headers:
+            API-Version:
+              $ref: '#/components/headers/API-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificatieStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT-token voor authenticatie
+
+  headers:
+    API-Version:
+      description: Volledige semver-versie van de API
+      schema:
+        type: string
+        example: 1.0.0
+
+  parameters:
+    notificatieId:
+      name: notificatieId
+      in: path
+      required: true
+      description: Uniek ID van de notificatie
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    OntvangerIdType:
+      type: string
+      enum:
+        - BSN
+        - RSIN
+        - KVK
+      description: Type identificatie van de ontvanger
+
+    NotificatieKanaal:
+      type: string
+      enum:
+        - EMAIL
+        - SMS
+      description: Kanaal waarover de notificatie wordt verstuurd
+
+    NotificatieStatusWaarde:
+      type: string
+      enum:
+        - AANGEMAAKT
+        - VERZONDEN
+        - AFGELEVERD
+        - MISLUKT
+      description: Mogelijke statussen van een notificatie
+
+    NotificatieVerzoek:
+      type: object
+      required:
+        - ontvangerIdType
+        - ontvangerId
+        - kanaal
+        - onderwerp
+        - inhoud
+      properties:
+        ontvangerIdType:
+          $ref: '#/components/schemas/OntvangerIdType'
+        ontvangerId:
+          type: string
+          description: Identificatie van de ontvanger
+          examples:
+            - "999999999"
+        kanaal:
+          $ref: '#/components/schemas/NotificatieKanaal'
+        onderwerp:
+          type: string
+          description: Onderwerp van de notificatie
+          maxLength: 200
+          examples:
+            - "U heeft een nieuw bericht"
+        inhoud:
+          type: string
+          description: Inhoud van de notificatie
+          examples:
+            - "Er staat een nieuw bericht voor u klaar in uw berichtenbox."
+
+    Notificatie:
+      type: object
+      description: Een verstuurde notificatie met de huidige status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Uniek ID van de notificatie
+        ontvangerIdType:
+          $ref: '#/components/schemas/OntvangerIdType'
+        ontvangerId:
+          type: string
+          description: Identificatie van de ontvanger
+        kanaal:
+          $ref: '#/components/schemas/NotificatieKanaal'
+        onderwerp:
+          type: string
+          description: Onderwerp van de notificatie
+        status:
+          $ref: '#/components/schemas/NotificatieStatusWaarde'
+        verzondenOp:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Tijdstip waarop de notificatie is verzonden
+        afgeleverdOp:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Tijdstip waarop de notificatie is afgeleverd (null indien nog niet afgeleverd)
+
+    NotificatieStatus:
+      type: object
+      description: Afleveringsstatus van een notificatie
+      properties:
+        notificatieId:
+          type: string
+          format: uuid
+          description: Uniek ID van de notificatie
+        status:
+          $ref: '#/components/schemas/NotificatieStatusWaarde'
+        verzondenOp:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Tijdstip waarop de notificatie is verzonden
+        afgeleverdOp:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Tijdstip waarop de notificatie is afgeleverd (null indien nog niet afgeleverd)
+        foutmelding:
+          type:
+            - string
+            - 'null'
+          description: Foutmelding indien de notificatie is mislukt
+
+    ProblemDetail:
+      type: object
+      description: Foutrespons conform RFC 9457 (Problem Details for HTTP APIs)
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI die het type fout identificeert
+          examples:
+            - "https://example.com/fouten/ongeldig-verzoek"
+        title:
+          type: string
+          description: Korte samenvatting van het probleem
+          examples:
+            - "Ongeldig verzoek"
+        status:
+          type: integer
+          description: HTTP-statuscode
+          examples:
+            - 400
+        detail:
+          type: string
+          description: Gedetailleerde uitleg van het probleem
+          examples:
+            - "Het veld 'kanaal' moet EMAIL of SMS zijn."
+        instance:
+          type: string
+          format: uri
+          description: URI die het specifieke voorkomen van het probleem identificeert
+
+  responses:
+    BadRequest:
+      description: Ongeldig verzoek
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    Unauthorized:
+      description: Niet geauthenticeerd
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    Forbidden:
+      description: Niet geautoriseerd
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    NotFound:
+      description: Resource niet gevonden
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    InternalServerError:
+      description: Interne serverfout
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'

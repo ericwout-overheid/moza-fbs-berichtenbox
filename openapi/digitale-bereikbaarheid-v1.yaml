@@ -1,0 +1,258 @@
+openapi: 3.1.0
+info:
+  title: Digitale Bereikbaarheid API
+  version: 1.0.0
+  description: >
+    API voor het beheren van de digitale bereikbaarheidsstatus van
+    ontvangers binnen het Federatief Berichtenstelsel (FBS). Hiermee
+    kan worden vastgelegd of een burger of ondernemer toestemming heeft
+    gegeven voor digitale berichtgeving en kan deze toestemming worden
+    ingetrokken.
+  contact:
+    name: FBS Team
+    url: https://github.com/ericwout-overheid/moza-fbs-berichtenbox/issues
+    email: fbs@example.nl
+  license:
+    name: EUPL-1.2
+    url: https://eupl.eu/1.2/nl/
+
+servers:
+  - url: http://localhost:8084
+    description: Lokale ontwikkelomgeving
+
+tags:
+  - name: Bereikbaarheid
+    description: Beheer van digitale bereikbaarheidsstatus en toestemming
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/v1/bereikbaarheid/{ontvangerId}:
+    get:
+      operationId: haalBereikbaarheid
+      summary: Haal de digitale bereikbaarheidsstatus op
+      description: >
+        Vraagt de huidige digitale bereikbaarheidsstatus op van een
+        specifieke ontvanger. Geeft aan of de ontvanger toestemming
+        heeft gegeven voor digitale berichtgeving.
+      tags:
+        - Bereikbaarheid
+      parameters:
+        - $ref: '#/components/parameters/ontvangerId'
+        - $ref: '#/components/parameters/ontvangerIdType'
+      responses:
+        '200':
+          description: Digitale bereikbaarheidsstatus van de ontvanger
+          headers:
+            API-Version:
+              $ref: '#/components/headers/API-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bereikbaarheid'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      operationId: registreerBereikbaarheid
+      summary: Registreer of trek digitale bereikbaarheid in
+      description: >
+        Registreert de toestemming voor digitale bereikbaarheid of trekt
+        deze in. Bij intrekking wordt de intrekkingsdatum vastgelegd.
+      tags:
+        - Bereikbaarheid
+      parameters:
+        - $ref: '#/components/parameters/ontvangerId'
+        - $ref: '#/components/parameters/ontvangerIdType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bereikbaarheid'
+      responses:
+        '200':
+          description: Bereikbaarheidsstatus succesvol bijgewerkt
+          headers:
+            API-Version:
+              $ref: '#/components/headers/API-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bereikbaarheid'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT-token voor authenticatie
+
+  headers:
+    API-Version:
+      description: Volledige semver-versie van de API
+      schema:
+        type: string
+        example: 1.0.0
+
+  parameters:
+    ontvangerId:
+      name: ontvangerId
+      in: path
+      required: true
+      description: Identificatie van de ontvanger
+      schema:
+        type: string
+      examples:
+        bsn:
+          summary: BSN-voorbeeld
+          value: "999999999"
+        kvk:
+          summary: KVK-nummer voorbeeld
+          value: "12345678"
+
+    ontvangerIdType:
+      name: ontvangerIdType
+      in: query
+      required: true
+      description: Type identificatie van de ontvanger
+      schema:
+        $ref: '#/components/schemas/OntvangerIdType'
+
+  schemas:
+    OntvangerIdType:
+      type: string
+      enum:
+        - BSN
+        - RSIN
+        - KVK
+      description: Type identificatie van de ontvanger
+
+    Bereikbaarheid:
+      type: object
+      description: >
+        Digitale bereikbaarheidsstatus van een ontvanger. Geeft aan of
+        de burger of ondernemer toestemming heeft gegeven voor het
+        ontvangen van digitale berichten van de overheid.
+      properties:
+        ontvangerId:
+          type: string
+          description: Identificatie van de ontvanger
+          examples:
+            - "999999999"
+        ontvangerIdType:
+          $ref: '#/components/schemas/OntvangerIdType'
+        digitaalBereikbaar:
+          type: boolean
+          description: Of de ontvanger toestemming heeft gegeven voor digitale berichtgeving
+          examples:
+            - true
+        registratieDatum:
+          type: string
+          format: date-time
+          description: Datum waarop de toestemming is geregistreerd
+        intrekkingsDatum:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Datum waarop de toestemming is ingetrokken (null indien niet ingetrokken)
+
+    ProblemDetail:
+      type: object
+      description: Foutrespons conform RFC 9457 (Problem Details for HTTP APIs)
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI die het type fout identificeert
+          examples:
+            - "https://example.com/fouten/niet-gevonden"
+        title:
+          type: string
+          description: Korte samenvatting van het probleem
+          examples:
+            - "Ontvanger niet gevonden"
+        status:
+          type: integer
+          description: HTTP-statuscode
+          examples:
+            - 404
+        detail:
+          type: string
+          description: Gedetailleerde uitleg van het probleem
+          examples:
+            - "Er is geen bereikbaarheidsstatus gevonden voor de opgegeven ontvanger."
+        instance:
+          type: string
+          format: uri
+          description: URI die het specifieke voorkomen van het probleem identificeert
+
+  responses:
+    BadRequest:
+      description: Ongeldig verzoek
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    Unauthorized:
+      description: Niet geauthenticeerd
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    Forbidden:
+      description: Niet geautoriseerd
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    NotFound:
+      description: Resource niet gevonden
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    InternalServerError:
+      description: Interne serverfout
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'

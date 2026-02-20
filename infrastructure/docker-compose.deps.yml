@@ -1,0 +1,156 @@
+# Federatief Berichtenstelsel - Dependencies Only
+# Gebruik: docker compose -f docker-compose.deps.yml up -d
+#
+# Bevat alleen externe dependencies voor lokale ontwikkeling.
+# Geen applicatie-services.
+
+services:
+
+  # ============================================================
+  # PostgreSQL 16 - Primaire database
+  # ============================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: fbs-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: fbs
+      POSTGRES_PASSWORD: fbs
+      POSTGRES_DB: fbs
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fbs -d fbs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ============================================================
+  # MinIO - S3-compatible object storage voor berichten/bijlagen
+  # ============================================================
+  minio:
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+    container_name: fbs-minio
+    ports:
+      - "9000:9000"   # API
+      - "9001:9001"   # Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/minio/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # MinIO initialisatie: maak default bucket aan
+  minio-init:
+    image: minio/mc:latest
+    container_name: fbs-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      set -e;
+      mc alias set local http://minio:9000 minioadmin minioadmin;
+      mc mb local/fbs-berichten --ignore-existing;
+      echo 'Bucket fbs-berichten aangemaakt';
+      "
+    restart: "no"
+
+  # ============================================================
+  # Kafka (KRaft mode) - Event streaming
+  # Geen Zookeeper nodig - KRaft gebruikt interne Raft consensus
+  # ============================================================
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: fbs-kafka
+    ports:
+      - "29092:29092"  # External listener (host access)
+    environment:
+      # KRaft configuratie
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # Listener configuratie
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # Cluster configuratie
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      # Disable auto-create: topics worden expliciet aangemaakt door kafka-init
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server kafka:9092 > /dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # Kafka topic initialisatie
+  kafka-init:
+    image: apache/kafka:3.7.0
+    container_name: fbs-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      set -e;
+      echo 'Kafka topics aanmaken...' &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic nl.fbs.bericht-ontvangen --partitions 3 --replication-factor 1 &&
+      echo '  nl.fbs.bericht-ontvangen OK' &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic nl.fbs.bericht-gelezen --partitions 3 --replication-factor 1 &&
+      echo '  nl.fbs.bericht-gelezen OK' &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic nl.fbs.bericht-verwijderd --partitions 3 --replication-factor 1 &&
+      echo '  nl.fbs.bericht-verwijderd OK' &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic nl.fbs.notificatie-verzonden --partitions 3 --replication-factor 1 &&
+      echo '  nl.fbs.notificatie-verzonden OK' &&
+      echo 'Alle topics aangemaakt'
+      "
+    restart: "no"
+
+  # ============================================================
+  # Jaeger - Distributed tracing (OpenTelemetry / LDV)
+  # UI: http://localhost:16686
+  # ============================================================
+  jaeger:
+    image: jaegertracing/all-in-one:1.64
+    container_name: fbs-jaeger
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "4317:4317"    # OTLP gRPC
+      - "4318:4318"    # OTLP HTTP
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:14269/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+    name: fbs-postgres-data
+  minio-data:
+    name: fbs-minio-data
+  kafka-data:
+    name: fbs-kafka-data

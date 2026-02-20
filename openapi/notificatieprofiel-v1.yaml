@@ -1,0 +1,273 @@
+openapi: 3.1.0
+info:
+  title: Notificatieprofiel API
+  version: 1.0.0
+  description: >
+    API voor het beheren van notificatievoorkeuren van ontvangers binnen
+    het Federatief Berichtenstelsel (FBS). Ontvangers kunnen hun
+    voorkeuren instellen voor e-mail- en SMS-notificaties en de
+    frequentie van meldingen.
+  contact:
+    name: FBS Team
+    url: https://github.com/ericwout-overheid/moza-fbs-berichtenbox/issues
+    email: fbs@example.nl
+  license:
+    name: EUPL-1.2
+    url: https://eupl.eu/1.2/nl/
+
+servers:
+  - url: http://localhost:8083
+    description: Lokale ontwikkelomgeving
+
+tags:
+  - name: Profielen
+    description: Beheer van notificatievoorkeuren van ontvangers
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/v1/profielen/{ontvangerId}:
+    get:
+      operationId: haalProfiel
+      summary: Haal notificatievoorkeuren op
+      description: >
+        Haalt de notificatievoorkeuren op van een specifieke ontvanger
+        op basis van het ontvanger-ID en het type identificatie.
+      tags:
+        - Profielen
+      parameters:
+        - $ref: '#/components/parameters/ontvangerId'
+        - $ref: '#/components/parameters/ontvangerIdType'
+      responses:
+        '200':
+          description: Notificatievoorkeuren van de ontvanger
+          headers:
+            API-Version:
+              $ref: '#/components/headers/API-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profiel'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      operationId: werkProfielBij
+      summary: Werk notificatievoorkeuren bij
+      description: >
+        Stelt de notificatievoorkeuren in of werkt deze bij voor een
+        specifieke ontvanger. Vervangt de bestaande voorkeuren volledig.
+      tags:
+        - Profielen
+      parameters:
+        - $ref: '#/components/parameters/ontvangerId'
+        - $ref: '#/components/parameters/ontvangerIdType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Profiel'
+      responses:
+        '200':
+          description: Notificatievoorkeuren succesvol bijgewerkt
+          headers:
+            API-Version:
+              $ref: '#/components/headers/API-Version'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profiel'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT-token voor authenticatie
+
+  headers:
+    API-Version:
+      description: Volledige semver-versie van de API
+      schema:
+        type: string
+        example: 1.0.0
+
+  parameters:
+    ontvangerId:
+      name: ontvangerId
+      in: path
+      required: true
+      description: Identificatie van de ontvanger
+      schema:
+        type: string
+      examples:
+        bsn:
+          summary: BSN-voorbeeld
+          value: "999999999"
+        kvk:
+          summary: KVK-nummer voorbeeld
+          value: "12345678"
+
+    ontvangerIdType:
+      name: ontvangerIdType
+      in: query
+      required: true
+      description: Type identificatie van de ontvanger
+      schema:
+        $ref: '#/components/schemas/OntvangerIdType'
+
+  schemas:
+    OntvangerIdType:
+      type: string
+      enum:
+        - BSN
+        - RSIN
+        - KVK
+      description: Type identificatie van de ontvanger
+
+    NotificatieFrequentie:
+      type: string
+      enum:
+        - DIRECT
+        - DAGELIJKS
+        - WEKELIJKS
+      description: Frequentie waarmee notificaties worden verstuurd
+
+    Profiel:
+      type: object
+      description: Notificatievoorkeuren van een ontvanger
+      properties:
+        ontvangerId:
+          type: string
+          description: Identificatie van de ontvanger
+          examples:
+            - "999999999"
+        ontvangerIdType:
+          $ref: '#/components/schemas/OntvangerIdType'
+        emailNotificaties:
+          type: boolean
+          description: Of de ontvanger e-mailnotificaties wenst te ontvangen
+          examples:
+            - true
+        smsNotificaties:
+          type: boolean
+          description: Of de ontvanger SMS-notificaties wenst te ontvangen
+          examples:
+            - false
+        emailAdres:
+          type:
+            - string
+            - 'null'
+          format: email
+          description: E-mailadres voor notificaties (null indien niet opgegeven)
+          examples:
+            - "jan.jansen@example.nl"
+        telefoonnummer:
+          type:
+            - string
+            - 'null'
+          description: Telefoonnummer voor SMS-notificaties (null indien niet opgegeven)
+          examples:
+            - "+31612345678"
+        frequentie:
+          $ref: '#/components/schemas/NotificatieFrequentie'
+
+    ProblemDetail:
+      type: object
+      description: Foutrespons conform RFC 9457 (Problem Details for HTTP APIs)
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI die het type fout identificeert
+          examples:
+            - "https://example.com/fouten/niet-gevonden"
+        title:
+          type: string
+          description: Korte samenvatting van het probleem
+          examples:
+            - "Profiel niet gevonden"
+        status:
+          type: integer
+          description: HTTP-statuscode
+          examples:
+            - 404
+        detail:
+          type: string
+          description: Gedetailleerde uitleg van het probleem
+          examples:
+            - "Er is geen notificatieprofiel gevonden voor de opgegeven ontvanger."
+        instance:
+          type: string
+          format: uri
+          description: URI die het specifieke voorkomen van het probleem identificeert
+
+  responses:
+    BadRequest:
+      description: Ongeldig verzoek
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    Unauthorized:
+      description: Niet geauthenticeerd
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    Forbidden:
+      description: Niet geautoriseerd
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    NotFound:
+      description: Resource niet gevonden
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+    InternalServerError:
+      description: Interne serverfout
+      headers:
+        API-Version:
+          $ref: '#/components/headers/API-Version'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
