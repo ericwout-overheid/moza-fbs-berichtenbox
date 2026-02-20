@@ -9,7 +9,10 @@ import io.opentelemetry.api.trace.Tracer
  * Builder voor OpenTelemetry spans met LDV-specifieke attributen.
  *
  * Voegt de verplichte `dpl.core.*` attributen toe aan spans conform
- * de Logboek Dataverwerkingen specificatie.
+ * de Logboek Dataverwerkingen specificatie:
+ * - `dpl.core.processing_activity_id`
+ * - `dpl.core.data_subject_id`
+ * - `dpl.core.data_subject_id_type`
  */
 class LdvSpanBuilder(private val tracer: Tracer) {
 
