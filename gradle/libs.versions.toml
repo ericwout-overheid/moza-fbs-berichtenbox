@@ -18,7 +18,7 @@ vaadin = "24.6.5"
 
 # Testing
 mockk = "1.13.14"
-testcontainers = "1.20.4"
+testcontainers = "2.0.3"
 rest-assured = "6.0.0"
 
 [libraries]
@@ -78,10 +78,10 @@ quarkus-test-security = { module = "io.quarkus:quarkus-test-security", version.r
 rest-assured-kotlin = { module = "io.rest-assured:kotlin-extensions", version.ref = "rest-assured" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
-testcontainers-postgresql = { module = "org.testcontainers:postgresql" }
-testcontainers-kafka = { module = "org.testcontainers:kafka" }
-testcontainers-minio = { module = "org.testcontainers:minio" }
-testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter" }
+testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql" }
+testcontainers-kafka = { module = "org.testcontainers:testcontainers-kafka" }
+testcontainers-minio = { module = "org.testcontainers:testcontainers-minio" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
