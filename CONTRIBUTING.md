@@ -1,168 +1,47 @@
-# Bijdragen aan het Federatief Berichtenstelsel
+# Contributing guidelines
 
-Welkom! We waarderen je interesse in het bijdragen aan de referentie-implementatie van het Federatief Berichtenstelsel. Dit document beschrijft hoe je kunt bijdragen aan het project.
+## What do I need to know to help?
 
-## Gedragscode
+If you are looking to help to with a code contribution our project uses GitHub to manage reviews of pull requests.
 
-Dit project hanteert de [Contributor Covenant](CODE_OF_CONDUCT.md) als gedragscode. Door bij te dragen aan dit project ga je akkoord met de voorwaarden daarvan.
+## Private vs public repos
 
-## Hoe kun je bijdragen?
+We distinguish between two routes to contribute to code bases of projects, in which we recognize:
+- code completely public and accessible
+- code sourced from private repository here or elsewhere
 
-### Bugs melden
+For projects that only work with public repos, the way of contributing for project team and community is the same and speaks for itself.
 
-- Controleer eerst of het probleem al gemeld is in de [issues](https://github.com/ericwout-overheid/moza-fbs-berichtenbox/issues).
-- Maak een nieuw issue aan met een duidelijke titel en beschrijving.
-- Voeg stappen toe om het probleem te reproduceren.
-- Vermeld je omgeving (OS, JDK-versie, Docker-versie).
-- Voeg relevante logbestanden of foutmeldingen toe.
+![Public repos only](./Img/CONTRIBUTING-public.jpg)
 
-### Features voorstellen
+For code sourced from private repository here or elsewhere, we distinguish between PRs of the project team and those of the community.
 
-- Open een issue met het label `enhancement`.
-- Beschrijf het gewenste gedrag en de motivatie.
-- Geef aan hoe de feature past binnen de FBS-standaarden.
-- Wacht op feedback voordat je begint met implementatie.
+![Private vs public repos](./Img/CONTRIBUTING-private.jpg)
 
-### Code bijdragen
+## How do I make a contribution?
 
-1. Fork de repository.
-2. Maak een feature branch aan (zie Branch strategie).
-3. Schrijf je code inclusief tests.
-4. Zorg dat alle tests slagen.
-5. Dien een Pull Request in.
+Never made an open source contribution before? Wondering how contributions work in the in our project? Here's a quick rundown!
 
-## Development setup
+1. Find or create an issue that you are interested in addressing or a feature that you would like to add.
+2. Fork the repository associated with the issue to your local GitHub organization. This means that you will have a copy of the repository under **your-GitHub-username/repository-name**.
+3. Clone the repository to your local machine using `git clone https://github.com/github-username/repository-name.git`.
+4. Create a new branch for your fix using `git checkout -b branch-name-here`.
+5. Make the appropriate changes for the issue you are trying to address or the feature that you want to add.
+6. Use git `add insert-paths-of-changed-files-here` to add the file contents of the changed files to the "snapshot" git uses to manage the state of the project, also known as the index.
+7. Use `git commit -m "Insert a short message of the changes made here"` to store the contents of the index with a descriptive message.
+8. Push the changes to the remote repository using `git push origin branch-name-here`.
+9. Submit a pull request to the upstream repository.
+10. Title the pull request with a short description of the changes made and the issue or bug number associated with your change. For example, you can title an issue like so `"Added more log outputting to resolve #52"`.
+11. In the description of the pull request, explain the changes that you made, any issues you think exist with the pull request you made, and any questions you have for the maintainer. It's OK if your pull request is not perfect (no pull request is), the reviewer will be able to help you fix any problems and improve it!
+12. Wait for the pull request to be reviewed by a maintainer.
+13. Make changes to the pull request if the reviewing maintainer recommends them.
+14. Celebrate your success after your pull request is merged!
 
-### Vereisten
+## Where can I go for help?
 
-| Tool | Versie | Doel |
-|------|--------|------|
-| JDK | 21+ | Kotlin/Quarkus runtime |
-| Docker | 24+ | Containers voor lokale services |
-| Docker Compose | 2.x | Orchestratie lokale omgeving |
-| Gradle | 8.x | Build tool (wrapper meegeleverd) |
+If you need help on a specific repositiory, you can ask the repository owners.
+If you need help on MinBZK repositories in general, you can e-mail opensource@minbzk.nl.
 
-### Omgeving opzetten
+## What does the Code of Conduct mean for me?
 
-```bash
-# Clone je fork
-git clone https://github.com/<jouw-gebruikersnaam>/moza-fbs-berichtenbox.git
-cd moza-fbs-berichtenbox
-
-# Start infrastructuur
-docker compose -f infrastructure/docker-compose.deps.yml up -d
-
-# Bouw het project
-./gradlew build
-
-# Draai de tests
-./gradlew test
-```
-
-### IDE
-
-We raden IntelliJ IDEA aan met de Kotlin-plugin. Import het project als Gradle-project.
-
-## Branch strategie
-
-| Branch | Doel |
-|--------|------|
-| `main` | Stabiele, releasable code |
-| `feature/<beschrijving>` | Nieuwe functionaliteit |
-| `fix/<beschrijving>` | Bugfixes |
-| `chore/<beschrijving>` | Onderhoud, configuratie, dependencies |
-
-### Workflow
-
-1. Maak een branch aan vanaf `main`: `git checkout -b feature/mijn-feature`
-2. Ontwikkel en commit regelmatig.
-3. Push je branch: `git push origin feature/mijn-feature`
-4. Open een Pull Request naar `main`.
-5. Wacht op review en verwerk feedback.
-6. Na goedkeuring wordt de PR gemerged.
-
-## Code stijl
-
-- Volg de officiele [Kotlin Coding Conventions](https://kotlinlang.org/docs/coding-conventions.html).
-- Gebruik `kotlin.code.style=official` (geconfigureerd in `gradle.properties`).
-
-### Aanvullende richtlijnen
-
-- Schrijf duidelijke KDoc-documentatie voor publieke API's.
-- Gebruik betekenisvolle namen voor variabelen, functies en klassen.
-- Houd functies kort en gericht op een taak.
-- Vermijd onnodige complexiteit.
-
-## Tests
-
-Tests zijn verplicht voor alle nieuwe functionaliteit en bugfixes.
-
-| Type | Framework | Beschrijving |
-|------|-----------|-------------|
-| Unit tests | JUnit 5 | Testen van individuele componenten |
-| Integratietests | Testcontainers | Testen met echte databases en services |
-| API tests | REST-assured | Testen van REST endpoints |
-
-### Tests draaien
-
-```bash
-# Unit tests
-./gradlew test
-
-# Integratietests (vereist Docker)
-./gradlew integrationTest
-
-# Alle tests
-./gradlew check
-```
-
-### Testrichtlijnen
-
-- Schrijf tests voordat je code schrijft (TDD) waar mogelijk.
-- Zorg voor een hoge testdekking van businesslogica.
-- Gebruik Testcontainers voor integratie met externe systemen.
-- Mock externe FBS-services in unit tests.
-
-## Commit conventie
-
-We gebruiken [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-<type>(<scope>): <beschrijving>
-
-[optionele body]
-
-[optionele footer]
-```
-
-### Types
-
-| Type | Beschrijving |
-|------|-------------|
-| `feat` | Nieuwe functionaliteit |
-| `fix` | Bugfix |
-| `docs` | Documentatie |
-| `style` | Code formatting (geen functionele wijziging) |
-| `refactor` | Code refactoring |
-| `test` | Tests toevoegen of wijzigen |
-| `chore` | Onderhoud (dependencies, CI, configuratie) |
-
-### Voorbeelden
-
-```
-feat(berichtenmagazijn): voeg berichtstatus-endpoint toe
-
-fix(sdk): corrigeer foutafhandeling bij timeout
-
-docs(readme): voeg architectuurdiagram toe
-
-chore(deps): update Quarkus naar 3.x
-```
-
-## Licentie
-
-Door bij te dragen aan dit project ga je ermee akkoord dat je bijdragen worden gelicenseerd onder de [European Union Public License v1.2 (EUPL-1.2)](LICENSE). Dit betekent dat je bijdragen vrij beschikbaar zijn onder dezelfde voorwaarden als de rest van het project.
-
-## Vragen?
-
-Heb je vragen over het bijdragen? Open een [discussion](https://github.com/ericwout-overheid/moza-fbs-berichtenbox/discussions) op GitHub.
+Our ![Code of Conduct](./CODE_OF_CONDUCT.md) means that you are responsible for treating everyone on the project with respect and courtesy regardless of their identity. If you are the victim of any inappropriate behavior or comments as described in our Code of Conduct, we are here for you and will do the best to ensure that the abuser is reprimanded appropriately, per our code.
