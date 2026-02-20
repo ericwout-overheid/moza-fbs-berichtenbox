@@ -19,7 +19,7 @@ vaadin = "24.6.5"
 # Testing
 mockk = "1.13.14"
 testcontainers = "1.20.4"
-rest-assured = "5.5.0"
+rest-assured = "6.0.0"
 
 [libraries]
 # Quarkus BOM
