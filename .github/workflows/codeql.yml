@@ -55,7 +55,7 @@ jobs:
 
       - name: Build with Gradle
         if: matrix.language == 'java-kotlin'
-        run: ./gradlew clean build -x test -x check
+        run: ./gradlew clean build -x test -x check --no-build-cache
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@9e907b5e64f6b83e7804b09294d44122997950d6 # v4.32.3
