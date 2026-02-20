@@ -30,7 +30,7 @@ jobs:
           - language: actions
             build-mode: none
           - language: java-kotlin
-            build-mode: autobuild
+            build-mode: manual
 
     steps:
       - name: Checkout repository
@@ -54,7 +54,7 @@ jobs:
           build-mode: ${{ matrix.build-mode }}
 
       - name: Build with Gradle
-        if: matrix.build-mode == 'autobuild'
+        if: matrix.language == 'java-kotlin'
         run: ./gradlew build -x test -x check
 
       - name: Perform CodeQL Analysis
