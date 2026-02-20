@@ -5,7 +5,7 @@ import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.trace.SdkTracerProvider
-import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
+import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor
 import io.opentelemetry.sdk.trace.samplers.Sampler
 
 /**
@@ -13,6 +13,8 @@ import io.opentelemetry.sdk.trace.samplers.Sampler
  *
  * LET OP: Sampling is VERBODEN per LDV-specificatie.
  * Alle dataverwerkingen MOETEN zonder uitzondering worden gelogd.
+ * SimpleSpanProcessor wordt gebruikt om te garanderen dat spans niet
+ * stilzwijgend worden weggegooid (zoals bij BatchSpanProcessor kan gebeuren).
  */
 object LdvConfiguration {
 
@@ -23,15 +25,21 @@ object LdvConfiguration {
      *
      * @param otlpEndpoint het OTLP gRPC endpoint (standaard localhost:4317)
      * @return geconfigureerde [OpenTelemetrySdk] instantie
+     * @throws IllegalArgumentException als het endpoint leeg of ongeldig is
      */
     fun create(otlpEndpoint: String = DEFAULT_OTLP_ENDPOINT): OpenTelemetrySdk {
+        require(otlpEndpoint.isNotBlank()) { "OTLP endpoint mag niet leeg zijn" }
+        require(otlpEndpoint.startsWith("http://") || otlpEndpoint.startsWith("https://")) {
+            "OTLP endpoint moet een geldig HTTP(S) URL zijn: $otlpEndpoint"
+        }
+
         val spanExporter = OtlpGrpcSpanExporter.builder()
             .setEndpoint(otlpEndpoint)
             .build()
 
         val tracerProvider = SdkTracerProvider.builder()
             .setSampler(Sampler.alwaysOn())
-            .addSpanProcessor(BatchSpanProcessor.builder(spanExporter).build())
+            .addSpanProcessor(SimpleSpanProcessor.create(spanExporter))
             .build()
 
         return OpenTelemetrySdk.builder()

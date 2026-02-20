@@ -1,11 +1,13 @@
 package nl.fbs.common.model
 
+import nl.fbs.common.FbsConstants
+
 /**
  * Generieke pagina voor gepagineerde resultaten.
  *
  * @param T type van de resultaten
  * @property resultaten lijst van resultaten op deze pagina
- * @property pagina huidig paginanummer (0-gebaseerd)
+ * @property pagina huidig paginanummer (1-gebaseerd, conform OpenAPI spec)
  * @property paginaGrootte aantal resultaten per pagina
  * @property totaalPaginas totaal aantal pagina's
  * @property totaalElementen totaal aantal elementen over alle pagina's
@@ -18,7 +20,7 @@ data class Page<T>(
     val totaalElementen: Long
 ) {
     init {
-        require(pagina >= 0) { "pagina moet >= 0 zijn" }
+        require(pagina >= 1) { "pagina moet >= 1 zijn" }
         require(paginaGrootte > 0) { "paginaGrootte moet > 0 zijn" }
         require(totaalPaginas >= 0) { "totaalPaginas moet >= 0 zijn" }
         require(totaalElementen >= 0) { "totaalElementen moet >= 0 zijn" }
@@ -38,9 +40,9 @@ data class Page<T>(
         /**
          * Maakt een lege pagina aan.
          */
-        fun <T> leeg(paginaGrootte: Int = 20): Page<T> = Page(
+        fun <T> leeg(paginaGrootte: Int = FbsConstants.DEFAULT_PAGE_SIZE): Page<T> = Page(
             resultaten = emptyList(),
-            pagina = 0,
+            pagina = 1,
             paginaGrootte = paginaGrootte,
             totaalPaginas = 0,
             totaalElementen = 0

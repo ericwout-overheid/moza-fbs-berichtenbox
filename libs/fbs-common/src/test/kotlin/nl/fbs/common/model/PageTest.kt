@@ -1,5 +1,6 @@
 package nl.fbs.common.model
 
+import nl.fbs.common.FbsConstants
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -11,7 +12,8 @@ class PageTest {
     fun `lege pagina heeft geen resultaten`() {
         val page = Page.leeg<String>()
         assertTrue(page.resultaten.isEmpty())
-        assertEquals(0, page.pagina)
+        assertEquals(1, page.pagina)
+        assertEquals(FbsConstants.DEFAULT_PAGE_SIZE, page.paginaGrootte)
         assertEquals(0, page.totaalPaginas)
         assertEquals(0L, page.totaalElementen)
     }
@@ -50,6 +52,19 @@ class PageTest {
     }
 
     @Test
+    fun `pagina met paginanummer 0 gooit exception`() {
+        assertThrows<IllegalArgumentException> {
+            Page(
+                resultaten = emptyList<String>(),
+                pagina = 0,
+                paginaGrootte = 20,
+                totaalPaginas = 0,
+                totaalElementen = 0
+            )
+        }
+    }
+
+    @Test
     fun `pagina met negatief paginanummer gooit exception`() {
         assertThrows<IllegalArgumentException> {
             Page(
@@ -67,7 +82,7 @@ class PageTest {
         assertThrows<IllegalArgumentException> {
             Page(
                 resultaten = emptyList<String>(),
-                pagina = 0,
+                pagina = 1,
                 paginaGrootte = 0,
                 totaalPaginas = 0,
                 totaalElementen = 0
@@ -76,10 +91,36 @@ class PageTest {
     }
 
     @Test
+    fun `pagina met negatief totaalPaginas gooit exception`() {
+        assertThrows<IllegalArgumentException> {
+            Page(
+                resultaten = emptyList<String>(),
+                pagina = 1,
+                paginaGrootte = 20,
+                totaalPaginas = -1,
+                totaalElementen = 0
+            )
+        }
+    }
+
+    @Test
+    fun `pagina met negatief totaalElementen gooit exception`() {
+        assertThrows<IllegalArgumentException> {
+            Page(
+                resultaten = emptyList<String>(),
+                pagina = 1,
+                paginaGrootte = 20,
+                totaalPaginas = 0,
+                totaalElementen = -1
+            )
+        }
+    }
+
+    @Test
     fun `pagina met resultaten`() {
         val page = Page(
             resultaten = listOf("a", "b", "c"),
-            pagina = 0,
+            pagina = 1,
             paginaGrootte = 20,
             totaalPaginas = 1,
             totaalElementen = 3

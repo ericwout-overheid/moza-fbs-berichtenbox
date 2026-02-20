@@ -7,6 +7,8 @@ import java.util.UUID
  * Notificatie zoals opgeslagen in het systeem.
  *
  * @property id unieke identifier van de notificatie
+ * @property ontvangerIdType type identificatie van de ontvanger
+ * @property ontvangerId identificatie van de ontvanger
  * @property kanaal kanaal waarover de notificatie is verzonden
  * @property onderwerp onderwerp van de notificatie
  * @property inhoud inhoud van de notificatie
@@ -17,6 +19,8 @@ import java.util.UUID
  */
 data class Notificatie(
     val id: UUID,
+    val ontvangerIdType: OntvangerIdType,
+    val ontvangerId: String,
     val kanaal: NotificatieKanaal,
     val onderwerp: String,
     val inhoud: String,
