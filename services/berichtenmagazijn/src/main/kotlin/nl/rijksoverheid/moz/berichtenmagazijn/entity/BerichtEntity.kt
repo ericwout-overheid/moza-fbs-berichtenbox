@@ -46,7 +46,7 @@ class BerichtEntity(
     var gelezenOp: Instant? = null,
 
     @OneToMany(mappedBy = "bericht", cascade = [CascadeType.ALL], orphanRemoval = true)
-    var bijlagen: MutableList<BijlageEntity> = mutableListOf()
+    val bijlagen: MutableList<BijlageEntity> = mutableListOf()
 ) {
     protected constructor() : this(id = UUID.randomUUID())
 }

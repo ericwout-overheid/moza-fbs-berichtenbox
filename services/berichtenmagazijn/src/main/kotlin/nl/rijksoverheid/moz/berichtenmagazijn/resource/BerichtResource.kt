@@ -32,7 +32,8 @@ class BerichtResource(
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     fun maakBericht(verzoek: BerichtAanmaakVerzoek): Response {
-        // TODO: extract afzenderOin from security context when OIDC is enabled
+        // SECURITY: In productie moet afzenderOin uit de OIDC/mTLS security context komen.
+        // Zonder dit worden alle berichten toegeschreven aan een vast test-OIN.
         val afzenderOin = DEV_AFZENDER_OIN
         val bericht = berichtService.maakBericht(afzenderOin, verzoek)
         eventPublisher.publishBerichtOntvangen(afzenderOin, bericht)

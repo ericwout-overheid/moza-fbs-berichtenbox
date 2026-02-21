@@ -33,13 +33,15 @@ class BijlageResource(
         @PathParam("berichtId") berichtId: UUID,
         @RestForm("bestand") bestand: FileUpload
     ): Response {
-        val bijlage = berichtService.uploadBijlage(
-            berichtId = berichtId,
-            bestandsnaam = bestand.fileName(),
-            mediaType = bestand.contentType(),
-            inputStream = bestand.filePath().toFile().inputStream(),
-            grootte = bestand.size()
-        )
+        val bijlage = bestand.filePath().toFile().inputStream().use { inputStream ->
+            berichtService.uploadBijlage(
+                berichtId = berichtId,
+                bestandsnaam = bestand.fileName(),
+                mediaType = bestand.contentType(),
+                inputStream = inputStream,
+                grootte = bestand.size()
+            )
+        }
         return Response.status(Response.Status.CREATED).entity(bijlage).build()
     }
 }

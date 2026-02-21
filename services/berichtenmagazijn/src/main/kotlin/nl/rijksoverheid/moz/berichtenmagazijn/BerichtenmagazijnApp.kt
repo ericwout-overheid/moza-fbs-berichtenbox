@@ -1,9 +1,9 @@
 package nl.rijksoverheid.moz.berichtenmagazijn
 
 /**
- * Berichtenmagazijn - central message store for FBS.
+ * Berichtenmagazijn - centrale berichtenopslag voor het Federatief Berichtenstelsel.
  *
- * Stores and manages messages (berichten) including documents/attachments.
- * Provides REST API for message CRUD operations.
+ * Beheert berichten inclusief bijlagen (documenten). Biedt een REST API
+ * voor het aanmaken, ophalen, statuswijziging en verwijderen van berichten.
  */
 class BerichtenmagazijnApp

@@ -16,7 +16,9 @@ import nl.rijksoverheid.moz.common.model.BerichtStatusWijziging
 import nl.rijksoverheid.moz.common.model.BijlageMetadata
 import nl.rijksoverheid.moz.common.model.OntvangerIdType
 import nl.rijksoverheid.moz.common.model.Page
+import nl.rijksoverheid.moz.common.FbsConstants
 import nl.rijksoverheid.moz.ldv.LdvLogger
+import org.jboss.logging.Logger
 import nl.rijksoverheid.moz.ldv.LdvVerwerking
 import java.io.InputStream
 import java.net.URI
@@ -31,6 +33,8 @@ class BerichtService(
     private val storageService: MinioStorageService,
     private val ldvLogger: LdvLogger
 ) {
+
+    private val log = Logger.getLogger(BerichtService::class.java)
 
     fun maakBericht(afzenderOin: String, verzoek: BerichtAanmaakVerzoek): Bericht {
         val entity = BerichtEntity(
@@ -77,6 +81,14 @@ class BerichtService(
         page: Int,
         pageSize: Int
     ): Page<Bericht> {
+        require((ontvangerIdType == null) == (ontvangerId == null)) {
+            "ontvangerIdType en ontvangerId moeten samen opgegeven worden"
+        }
+        require(page >= 1) { "page moet >= 1 zijn" }
+        require(pageSize >= 1) { "pageSize moet >= 1 zijn" }
+
+        val effectivePageSize = pageSize.coerceAtMost(FbsConstants.MAX_PAGE_SIZE)
+        // API uses 1-based pages (per OpenAPI spec), Panache uses 0-based
         val zeroBasedPage = page - 1
 
         if (ontvangerIdType != null && ontvangerId != null) {
@@ -85,14 +97,14 @@ class BerichtService(
 
             if (status != null) {
                 entities = berichtRepository.findByOntvangerAndStatus(
-                    ontvangerIdType, ontvangerId, status, zeroBasedPage, pageSize
+                    ontvangerIdType, ontvangerId, status, zeroBasedPage, effectivePageSize
                 )
                 total = berichtRepository.countByOntvangerAndStatus(
                     ontvangerIdType, ontvangerId, status
                 )
             } else {
                 entities = berichtRepository.findByOntvanger(
-                    ontvangerIdType, ontvangerId, zeroBasedPage, pageSize
+                    ontvangerIdType, ontvangerId, zeroBasedPage, effectivePageSize
                 )
                 total = berichtRepository.countByOntvanger(ontvangerIdType, ontvangerId)
             }
@@ -100,22 +112,22 @@ class BerichtService(
             return Page(
                 resultaten = entities.map { BerichtMapper.toDto(it) },
                 pagina = page,
-                paginaGrootte = pageSize,
-                totaalPaginas = Page.berekenTotaalPaginas(total, pageSize),
+                paginaGrootte = effectivePageSize,
+                totaalPaginas = Page.berekenTotaalPaginas(total, effectivePageSize),
                 totaalElementen = total
             )
         }
 
         val total = berichtRepository.telAlles()
         val entities = berichtRepository.vindAlles()
-            .page(zeroBasedPage, pageSize)
+            .page(zeroBasedPage, effectivePageSize)
             .list()
 
         return Page(
             resultaten = entities.map { BerichtMapper.toDto(it) },
             pagina = page,
-            paginaGrootte = pageSize,
-            totaalPaginas = Page.berekenTotaalPaginas(total, pageSize),
+            paginaGrootte = effectivePageSize,
+            totaalPaginas = Page.berekenTotaalPaginas(total, effectivePageSize),
             totaalElementen = total
         )
     }
@@ -146,6 +158,7 @@ class BerichtService(
             ?: throw BerichtNietGevondenException(berichtId)
 
         val afzenderOin = entity.afzenderOin
+        val objectKeys = entity.bijlagen.map { it.objectKey }
 
         ldvLogger.withinVerwerking(
             LdvVerwerking(
@@ -155,10 +168,17 @@ class BerichtService(
                 operatieNaam = "verwijderBericht"
             )
         ) {
-            entity.bijlagen.forEach { bijlage ->
-                storageService.delete(bijlage.objectKey)
-            }
             berichtRepository.verwijderOpId(berichtId)
+        }
+
+        // MinIO cleanup buiten transactie (best-effort)
+        objectKeys.forEach { objectKey ->
+            try {
+                storageService.delete(objectKey)
+            } catch (e: Exception) {
+                log.errorf(e, "MinIO object verwijderen mislukt: objectKey=%s, berichtId=%s",
+                    objectKey, berichtId)
+            }
         }
 
         return afzenderOin
@@ -179,17 +199,26 @@ class BerichtService(
 
         storageService.upload(objectKey, inputStream, mediaType, grootte)
 
-        val bijlage = BijlageEntity(
-            id = bijlageId,
-            bericht = bericht,
-            bestandsnaam = bestandsnaam,
-            mediaType = mediaType,
-            grootte = grootte,
-            objectKey = objectKey
-        )
-        bijlageRepository.bewaar(bijlage)
-
-        return BerichtMapper.toBijlageDto(bijlage)
+        try {
+            val bijlage = BijlageEntity(
+                id = bijlageId,
+                bericht = bericht,
+                bestandsnaam = bestandsnaam,
+                mediaType = mediaType,
+                grootte = grootte,
+                objectKey = objectKey
+            )
+            bijlageRepository.bewaar(bijlage)
+            return BerichtMapper.toBijlageDto(bijlage)
+        } catch (e: Exception) {
+            log.errorf(e, "Database persist mislukt na MinIO upload, opruimen: objectKey=%s", objectKey)
+            try {
+                storageService.delete(objectKey)
+            } catch (cleanupEx: Exception) {
+                log.errorf(cleanupEx, "Compenserende MinIO delete mislukt, orphaned object: objectKey=%s", objectKey)
+            }
+            throw e
+        }
     }
 
     fun lijstBijlagen(berichtId: UUID): List<BijlageMetadata> {

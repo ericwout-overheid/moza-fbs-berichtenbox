@@ -236,6 +236,101 @@ class BerichtServiceTest {
         assertEquals("doc.pdf", result[0].bestandsnaam)
     }
 
+    @Test
+    fun `werkBerichtBij does not overwrite gelezenOp when already set`() {
+        val berichtId = UUID.randomUUID()
+        val originalGelezenOp = Instant.parse("2026-01-15T10:00:00Z")
+        val entity = createTestEntity(berichtId).apply {
+            status = BerichtStatus.GELEZEN
+            gelezenOp = originalGelezenOp
+        }
+
+        every { berichtRepository.vindOpId(berichtId) } returns entity
+        every { berichtRepository.bewaar(any<BerichtEntity>()) } just Runs
+
+        val bericht = service.werkBerichtBij(berichtId, BerichtStatusWijziging(BerichtStatus.GELEZEN))
+
+        assertEquals(originalGelezenOp, bericht.gelezenOp)
+    }
+
+    @Test
+    fun `verwijderBericht deletes all bijlagen from storage`() {
+        val berichtId = UUID.randomUUID()
+        val entity = createTestEntity(berichtId)
+        val bijlage1 = BijlageEntity(
+            bericht = entity, bestandsnaam = "a.pdf",
+            mediaType = "application/pdf", grootte = 1024, objectKey = "key1"
+        )
+        val bijlage2 = BijlageEntity(
+            bericht = entity, bestandsnaam = "b.pdf",
+            mediaType = "application/pdf", grootte = 2048, objectKey = "key2"
+        )
+        entity.bijlagen.addAll(listOf(bijlage1, bijlage2))
+
+        every { berichtRepository.vindOpId(berichtId) } returns entity
+        every { storageService.delete(any()) } just Runs
+        every { berichtRepository.verwijderOpId(berichtId) } returns true
+
+        service.verwijderBericht(berichtId)
+
+        verify(exactly = 1) { storageService.delete("key1") }
+        verify(exactly = 1) { storageService.delete("key2") }
+    }
+
+    @Test
+    fun `uploadBijlage throws exception when bericht not found`() {
+        val berichtId = UUID.randomUUID()
+        every { berichtRepository.vindOpId(berichtId) } returns null
+
+        assertThrows<BerichtNietGevondenException> {
+            service.uploadBijlage(
+                berichtId, "test.pdf", "application/pdf",
+                ByteArrayInputStream("data".toByteArray()), 4L
+            )
+        }
+
+        verify(exactly = 0) { storageService.upload(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `lijstBijlagen throws exception when bericht not found`() {
+        val berichtId = UUID.randomUUID()
+        every { berichtRepository.vindOpId(berichtId) } returns null
+
+        assertThrows<BerichtNietGevondenException> {
+            service.lijstBijlagen(berichtId)
+        }
+    }
+
+    @Test
+    fun `lijstBerichten rejects partial filter parameters`() {
+        assertThrows<IllegalArgumentException> {
+            service.lijstBerichten(OntvangerIdType.BSN, null, null, 1, 20)
+        }
+    }
+
+    @Test
+    fun `lijstBerichten rejects page less than 1`() {
+        assertThrows<IllegalArgumentException> {
+            service.lijstBerichten(null, null, null, 0, 20)
+        }
+    }
+
+    @Test
+    fun `lijstBerichten clamps pageSize to max`() {
+        val entity = createTestEntity()
+        val query = mockk<PanacheQuery<BerichtEntity>>()
+
+        every { berichtRepository.telAlles() } returns 1L
+        every { berichtRepository.vindAlles() } returns query
+        every { query.page(0, 100) } returns query
+        every { query.list() } returns listOf(entity)
+
+        val page = service.lijstBerichten(null, null, null, 1, 500)
+
+        assertEquals(100, page.paginaGrootte)
+    }
+
     private fun createTestEntity(id: UUID = UUID.randomUUID()) = BerichtEntity(
         id = id,
         afzenderOin = testOin,

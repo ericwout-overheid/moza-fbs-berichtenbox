@@ -9,6 +9,7 @@ import nl.rijksoverheid.moz.cloudevents.FbsSourceUrn
 import nl.rijksoverheid.moz.common.model.Bericht
 import org.eclipse.microprofile.reactive.messaging.Channel
 import org.eclipse.microprofile.reactive.messaging.Emitter
+import org.jboss.logging.Logger
 
 @ApplicationScoped
 class BerichtEventPublisher(
@@ -18,14 +19,16 @@ class BerichtEventPublisher(
     private val objectMapper: ObjectMapper
 ) {
 
+    private val log = Logger.getLogger(BerichtEventPublisher::class.java)
+
     fun publishBerichtOntvangen(afzenderOin: String, bericht: Bericht) {
         val event = buildEvent(afzenderOin, FbsEventTypes.BERICHT_ONTVANGEN, bericht)
-        ontvangenEmitter.send(event)
+        sendEvent(ontvangenEmitter, event, FbsEventTypes.BERICHT_ONTVANGEN, bericht.id.toString())
     }
 
     fun publishBerichtGelezen(afzenderOin: String, bericht: Bericht) {
         val event = buildEvent(afzenderOin, FbsEventTypes.BERICHT_GELEZEN, bericht)
-        gelezenEmitter.send(event)
+        sendEvent(gelezenEmitter, event, FbsEventTypes.BERICHT_GELEZEN, bericht.id.toString())
     }
 
     fun publishBerichtVerwijderd(afzenderOin: String, berichtId: java.util.UUID) {
@@ -35,7 +38,19 @@ class BerichtEventPublisher(
             type = FbsEventTypes.BERICHT_VERWIJDERD,
             subject = berichtId.toString()
         )
-        verwijderdEmitter.send(event)
+        sendEvent(verwijderdEmitter, event, FbsEventTypes.BERICHT_VERWIJDERD, berichtId.toString())
+    }
+
+    private fun sendEvent(emitter: Emitter<CloudEvent>, event: CloudEvent, type: String, subject: String) {
+        emitter.send(event).whenComplete { _, throwable ->
+            if (throwable != null) {
+                log.errorf(
+                    throwable,
+                    "Kafka event publicatie mislukt: type=%s, subject=%s",
+                    type, subject
+                )
+            }
+        }
     }
 
     private fun buildEvent(afzenderOin: String, type: String, bericht: Bericht): CloudEvent {

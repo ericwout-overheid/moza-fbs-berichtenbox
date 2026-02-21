@@ -1,3 +1,6 @@
+-- V1: Initieel schema voor berichtenmagazijn.
+-- Berichten met bijlagen (object storage referenties in MinIO).
+
 CREATE TABLE berichten (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     afzender_oin VARCHAR(20) NOT NULL,
