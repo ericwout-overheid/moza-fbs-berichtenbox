@@ -131,7 +131,7 @@ services:
   # UI: http://localhost:16686
   # ============================================================
   jaeger:
-    image: jaegertracing/all-in-one:1.64
+    image: jaegertracing/all-in-one:1.76.0
     container_name: fbs-jaeger
     ports:
       - "16686:16686"  # Jaeger UI
