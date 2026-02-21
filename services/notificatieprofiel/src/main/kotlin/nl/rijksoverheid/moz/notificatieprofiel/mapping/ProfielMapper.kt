@@ -2,7 +2,6 @@ package nl.rijksoverheid.moz.notificatieprofiel.mapping
 
 import nl.rijksoverheid.moz.common.model.Profiel
 import nl.rijksoverheid.moz.notificatieprofiel.entity.ProfielEntity
-import java.time.Instant
 
 object ProfielMapper {
 
@@ -17,11 +16,6 @@ object ProfielMapper {
     )
 
     fun updateEntity(entity: ProfielEntity, profiel: Profiel) {
-        entity.emailNotificaties = profiel.emailNotificaties
-        entity.smsNotificaties = profiel.smsNotificaties
-        entity.emailAdres = profiel.emailAdres
-        entity.telefoonnummer = profiel.telefoonnummer
-        entity.frequentie = profiel.frequentie
-        entity.bijgewerktOp = Instant.now()
+        entity.werkBij(profiel)
     }
 }

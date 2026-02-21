@@ -14,7 +14,6 @@ import org.jboss.logging.Logger
 import java.net.URI
 
 @ApplicationScoped
-@Transactional
 class ProfielService(
     private val profielRepository: ProfielRepository,
     private val ldvLogger: LdvLogger
@@ -42,6 +41,7 @@ class ProfielService(
         return ProfielMapper.toDto(entity)
     }
 
+    @Transactional
     fun werkProfielBij(ontvangerId: String, ontvangerIdType: OntvangerIdType, profiel: Profiel): Profiel {
         require(profiel.ontvangerId == ontvangerId && profiel.ontvangerIdType == ontvangerIdType) {
             "ontvangerId en ontvangerIdType in body moeten overeenkomen met pad-parameters"

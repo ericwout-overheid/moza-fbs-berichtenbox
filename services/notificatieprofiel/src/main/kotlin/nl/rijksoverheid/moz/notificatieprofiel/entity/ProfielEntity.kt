@@ -8,6 +8,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import nl.rijksoverheid.moz.common.model.NotificatieFrequentie
 import nl.rijksoverheid.moz.common.model.OntvangerIdType
+import nl.rijksoverheid.moz.common.model.Profiel
 import java.time.Instant
 import java.util.UUID
 
@@ -15,14 +16,14 @@ import java.util.UUID
 @Table(name = "profielen")
 class ProfielEntity(
     @Id
-    var id: UUID = UUID.randomUUID(),
+    val id: UUID = UUID.randomUUID(),
 
     @Column(name = "ontvanger_id", nullable = false, length = 20)
-    var ontvangerId: String = "",
+    val ontvangerId: String = "",
 
     @Enumerated(EnumType.STRING)
     @Column(name = "ontvanger_id_type", nullable = false, length = 4)
-    var ontvangerIdType: OntvangerIdType = OntvangerIdType.BSN,
+    val ontvangerIdType: OntvangerIdType = OntvangerIdType.BSN,
 
     @Column(name = "email_notificaties", nullable = false)
     var emailNotificaties: Boolean = false,
@@ -41,10 +42,19 @@ class ProfielEntity(
     var frequentie: NotificatieFrequentie = NotificatieFrequentie.DIRECT,
 
     @Column(name = "aangemaakt_op", nullable = false)
-    var aangemaaktOp: Instant = Instant.now(),
+    val aangemaaktOp: Instant = Instant.now(),
 
     @Column(name = "bijgewerkt_op", nullable = false)
     var bijgewerktOp: Instant = Instant.now()
 ) {
     protected constructor() : this(id = UUID.randomUUID())
+
+    fun werkBij(profiel: Profiel) {
+        emailNotificaties = profiel.emailNotificaties
+        smsNotificaties = profiel.smsNotificaties
+        emailAdres = profiel.emailAdres
+        telefoonnummer = profiel.telefoonnummer
+        frequentie = profiel.frequentie
+        bijgewerktOp = Instant.now()
+    }
 }

@@ -1,9 +1,9 @@
 package nl.rijksoverheid.moz.notificatie
 
 /**
- * Notificatie - notification dispatch service for FBS.
+ * Notificatie - service voor het verzenden van notificaties binnen het FBS.
  *
- * Consumes events from Kafka and dispatches notifications
- * via email or SMS channels.
+ * Consumeert events van Kafka en verstuurt notificaties
+ * via e-mail of SMS kanalen.
  */
 class NotificatieApp

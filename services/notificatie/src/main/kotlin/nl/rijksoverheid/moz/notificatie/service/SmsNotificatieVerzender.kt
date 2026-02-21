@@ -11,7 +11,8 @@ class SmsNotificatieVerzender : NotificatieVerzender {
 
     override val kanaal = NotificatieKanaal.SMS
 
+    // TODO: Implementeer echte SMS-gateway integratie (bijv. MessageBird, CM.com)
     override fun verzend(adres: String, onderwerp: String, inhoud: String) {
-        log.infof("SMS notificatie (mock): naar=%s, onderwerp=%s", adres, onderwerp)
+        log.warnf("SMS notificatie (stub): naar=%s, onderwerp=%s — geen echte SMS verzonden", adres, onderwerp)
     }
 }

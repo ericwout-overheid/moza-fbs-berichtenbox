@@ -122,6 +122,8 @@ services:
       echo '  nl.fbs.bericht-verwijderd OK' &&
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic nl.fbs.notificatie-verzonden --partitions 3 --replication-factor 1 &&
       echo '  nl.fbs.notificatie-verzonden OK' &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic nl.fbs.bericht-ontvangen.dlq --partitions 3 --replication-factor 1 &&
+      echo '  nl.fbs.bericht-ontvangen.dlq OK' &&
       echo 'Alle topics aangemaakt'
       "
     restart: "no"

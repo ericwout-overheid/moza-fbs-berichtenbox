@@ -4,10 +4,13 @@ import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import jakarta.enterprise.inject.Instance
+import jakarta.ws.rs.WebApplicationException
 import nl.rijksoverheid.moz.common.model.Bericht
 import nl.rijksoverheid.moz.common.model.BerichtStatus
+import nl.rijksoverheid.moz.common.model.Notificatie
 import nl.rijksoverheid.moz.common.model.NotificatieFrequentie
 import nl.rijksoverheid.moz.common.model.NotificatieKanaal
 import nl.rijksoverheid.moz.common.model.NotificatieStatusWaarde
@@ -17,9 +20,12 @@ import nl.rijksoverheid.moz.common.model.Profiel
 import nl.rijksoverheid.moz.ldv.LdvLogger
 import nl.rijksoverheid.moz.notificatie.client.NotificatieprofielClient
 import nl.rijksoverheid.moz.notificatie.entity.NotificatieEntity
+import nl.rijksoverheid.moz.notificatie.event.NotificatieEventPublisher
 import nl.rijksoverheid.moz.notificatie.exception.NotificatieNietGevondenException
 import nl.rijksoverheid.moz.notificatie.repository.NotificatieRepository
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.time.Instant
@@ -34,9 +40,10 @@ class NotificatieServiceTest {
     private val verzenders = mockk<Instance<NotificatieVerzender>>()
     private val profielClient = mockk<NotificatieprofielClient>()
     private val ldvLogger = mockk<LdvLogger>()
+    private val eventPublisher = mockk<NotificatieEventPublisher>()
 
     private val service = NotificatieService(
-        notificatieRepository, verzenders, profielClient, ldvLogger
+        notificatieRepository, verzenders, profielClient, ldvLogger, eventPublisher
     )
 
     init {
@@ -101,15 +108,20 @@ class NotificatieServiceTest {
             smsNotificaties = false,
             emailAdres = "test@example.nl"
         )
+        val entitySlot = slot<NotificatieEntity>()
 
         every { profielClient.haalProfiel("999999999", OntvangerIdType.BSN) } returns profiel
-        every { notificatieRepository.bewaar(any<NotificatieEntity>()) } just Runs
+        every { notificatieRepository.bewaar(capture(entitySlot)) } just Runs
         every { verzenders.stream() } returns Stream.of(emailVerzender)
         every { emailVerzender.verzend(any(), any(), any()) } just Runs
+        every { eventPublisher.publishNotificatieVerzonden(any()) } just Runs
 
         service.verwerkBerichtOntvangen(bericht)
 
         verify { emailVerzender.verzend("test@example.nl", "Test onderwerp", "Test inhoud") }
+        assertEquals(NotificatieStatusWaarde.VERZONDEN, entitySlot.captured.status)
+        assertNotNull(entitySlot.captured.verzondenOp)
+        verify { eventPublisher.publishNotificatieVerzonden(any()) }
     }
 
     @Test
@@ -122,15 +134,19 @@ class NotificatieServiceTest {
             smsNotificaties = true,
             telefoonnummer = "+31612345678"
         )
+        val entitySlot = slot<NotificatieEntity>()
 
         every { profielClient.haalProfiel("999999999", OntvangerIdType.BSN) } returns profiel
-        every { notificatieRepository.bewaar(any<NotificatieEntity>()) } just Runs
+        every { notificatieRepository.bewaar(capture(entitySlot)) } just Runs
         every { verzenders.stream() } returns Stream.of(smsVerzender)
         every { smsVerzender.verzend(any(), any(), any()) } just Runs
+        every { eventPublisher.publishNotificatieVerzonden(any()) } just Runs
 
         service.verwerkBerichtOntvangen(bericht)
 
         verify { smsVerzender.verzend("+31612345678", "Test onderwerp", "Test inhoud") }
+        assertEquals(NotificatieStatusWaarde.VERZONDEN, entitySlot.captured.status)
+        assertNotNull(entitySlot.captured.verzondenOp)
     }
 
     @Test
@@ -150,22 +166,53 @@ class NotificatieServiceTest {
         every { verzenders.stream() } returns Stream.of(emailVerzender) andThen Stream.of(smsVerzender)
         every { emailVerzender.verzend(any(), any(), any()) } just Runs
         every { smsVerzender.verzend(any(), any(), any()) } just Runs
+        every { eventPublisher.publishNotificatieVerzonden(any()) } just Runs
 
         service.verwerkBerichtOntvangen(bericht)
 
         verify { emailVerzender.verzend("test@example.nl", any(), any()) }
         verify { smsVerzender.verzend("+31612345678", any(), any()) }
+        verify(exactly = 2) { eventPublisher.publishNotificatieVerzonden(any()) }
     }
 
     @Test
-    fun `verwerkBerichtOntvangen skips when no profiel found`() {
+    fun `verwerkBerichtOntvangen skips when profiel not found (404)`() {
         val bericht = createTestBericht()
         every { profielClient.haalProfiel("999999999", OntvangerIdType.BSN) } throws
-            RuntimeException("Service unavailable")
+            WebApplicationException(404)
 
         service.verwerkBerichtOntvangen(bericht)
 
         verify(exactly = 0) { notificatieRepository.bewaar(any<NotificatieEntity>()) }
+    }
+
+    @Test
+    fun `verwerkBerichtOntvangen rethrows on server error (5xx)`() {
+        val bericht = createTestBericht()
+        every { profielClient.haalProfiel("999999999", OntvangerIdType.BSN) } throws
+            WebApplicationException(503)
+
+        assertThrows<WebApplicationException> {
+            service.verwerkBerichtOntvangen(bericht)
+        }
+    }
+
+    @Test
+    fun `verwerkBerichtOntvangen does nothing when both channels disabled`() {
+        val bericht = createTestBericht()
+        val profiel = Profiel(
+            ontvangerId = "999999999",
+            ontvangerIdType = OntvangerIdType.BSN,
+            emailNotificaties = false,
+            smsNotificaties = false
+        )
+
+        every { profielClient.haalProfiel("999999999", OntvangerIdType.BSN) } returns profiel
+
+        service.verwerkBerichtOntvangen(bericht)
+
+        verify(exactly = 0) { notificatieRepository.bewaar(any<NotificatieEntity>()) }
+        verify(exactly = 0) { eventPublisher.publishNotificatieVerzonden(any()) }
     }
 
     @Test
@@ -178,15 +225,19 @@ class NotificatieServiceTest {
             smsNotificaties = false,
             emailAdres = "test@example.nl"
         )
+        val entitySlot = slot<NotificatieEntity>()
 
         every { profielClient.haalProfiel("999999999", OntvangerIdType.BSN) } returns profiel
-        every { notificatieRepository.bewaar(any<NotificatieEntity>()) } just Runs
+        every { notificatieRepository.bewaar(capture(entitySlot)) } just Runs
         every { verzenders.stream() } returns Stream.of(emailVerzender)
         every { emailVerzender.verzend(any(), any(), any()) } throws RuntimeException("SMTP error")
 
         service.verwerkBerichtOntvangen(bericht)
 
-        verify(exactly = 2) { notificatieRepository.bewaar(match<NotificatieEntity> { true }) }
+        assertEquals(NotificatieStatusWaarde.MISLUKT, entitySlot.captured.status)
+        assertEquals("SMTP error", entitySlot.captured.foutmelding)
+        assertNull(entitySlot.captured.verzondenOp)
+        verify(exactly = 0) { eventPublisher.publishNotificatieVerzonden(any()) }
     }
 
     private fun createTestEntity(id: UUID = UUID.randomUUID()) = NotificatieEntity(

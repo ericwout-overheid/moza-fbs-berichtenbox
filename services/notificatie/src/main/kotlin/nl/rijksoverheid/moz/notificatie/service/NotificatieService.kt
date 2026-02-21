@@ -3,6 +3,8 @@ package nl.rijksoverheid.moz.notificatie.service
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.enterprise.inject.Instance
 import jakarta.transaction.Transactional
+import jakarta.transaction.Transactional.TxType.REQUIRES_NEW
+import jakarta.ws.rs.WebApplicationException
 import nl.rijksoverheid.moz.common.model.Bericht
 import nl.rijksoverheid.moz.common.model.Notificatie
 import nl.rijksoverheid.moz.common.model.NotificatieKanaal
@@ -13,6 +15,7 @@ import nl.rijksoverheid.moz.ldv.LdvLogger
 import nl.rijksoverheid.moz.ldv.LdvVerwerking
 import nl.rijksoverheid.moz.notificatie.client.NotificatieprofielClient
 import nl.rijksoverheid.moz.notificatie.entity.NotificatieEntity
+import nl.rijksoverheid.moz.notificatie.event.NotificatieEventPublisher
 import nl.rijksoverheid.moz.notificatie.exception.NotificatieNietGevondenException
 import nl.rijksoverheid.moz.notificatie.mapping.NotificatieMapper
 import nl.rijksoverheid.moz.notificatie.repository.NotificatieRepository
@@ -23,16 +26,17 @@ import java.time.Instant
 import java.util.UUID
 
 @ApplicationScoped
-@Transactional
 class NotificatieService(
     private val notificatieRepository: NotificatieRepository,
     private val verzenders: Instance<NotificatieVerzender>,
     @param:RestClient private val profielClient: NotificatieprofielClient,
-    private val ldvLogger: LdvLogger
+    private val ldvLogger: LdvLogger,
+    private val eventPublisher: NotificatieEventPublisher
 ) {
 
     private val log = Logger.getLogger(NotificatieService::class.java)
 
+    @Transactional
     fun maakNotificatie(verzoek: NotificatieVerzoek): Notificatie {
         val entity = NotificatieEntity(
             ontvangerIdType = verzoek.ontvangerIdType,
@@ -79,10 +83,13 @@ class NotificatieService(
     fun verwerkBerichtOntvangen(bericht: Bericht) {
         val profiel = try {
             profielClient.haalProfiel(bericht.ontvangerId, bericht.ontvangerIdType)
-        } catch (e: Exception) {
-            log.warnf("Profiel ophalen mislukt voor ontvanger %s (type %s), notificatie overgeslagen: %s",
-                bericht.ontvangerId, bericht.ontvangerIdType, e.message)
-            return
+        } catch (e: WebApplicationException) {
+            if (e.response.status == 404) {
+                log.infof("Geen profiel gevonden voor ontvanger %s (type %s), notificatie overgeslagen",
+                    bericht.ontvangerId, bericht.ontvangerIdType)
+                return
+            }
+            throw e
         }
 
         val emailAdres = profiel.emailAdres
@@ -96,7 +103,8 @@ class NotificatieService(
         }
     }
 
-    private fun verzendNotificatie(bericht: Bericht, kanaal: NotificatieKanaal, adres: String) {
+    @Transactional(REQUIRES_NEW)
+    internal fun verzendNotificatie(bericht: Bericht, kanaal: NotificatieKanaal, adres: String) {
         val entity = NotificatieEntity(
             ontvangerIdType = bericht.ontvangerIdType,
             ontvangerId = bericht.ontvangerId,
@@ -115,14 +123,14 @@ class NotificatieService(
 
             verzender.verzend(adres, bericht.onderwerp, bericht.inhoud)
 
-            entity.status = NotificatieStatusWaarde.VERZONDEN
-            entity.verzondenOp = Instant.now()
+            entity.markeerVerzonden()
+            notificatieRepository.bewaar(entity)
+
+            eventPublisher.publishNotificatieVerzonden(NotificatieMapper.toDto(entity))
         } catch (e: Exception) {
             log.errorf(e, "Notificatie verzenden mislukt: kanaal=%s, ontvanger=%s", kanaal, bericht.ontvangerId)
-            entity.status = NotificatieStatusWaarde.MISLUKT
-            entity.foutmelding = e.message ?: "Onbekende fout"
+            entity.markeerMislukt(e.message ?: "Onbekende fout")
+            notificatieRepository.bewaar(entity)
         }
-
-        notificatieRepository.bewaar(entity)
     }
 }
