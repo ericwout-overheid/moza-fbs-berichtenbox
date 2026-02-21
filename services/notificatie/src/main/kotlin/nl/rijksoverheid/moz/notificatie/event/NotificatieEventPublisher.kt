@@ -38,6 +38,10 @@ class NotificatieEventPublisher(
         }
     }
 
+    /**
+     * Best-effort event publicatie: events zijn supplementair aan de notificatie-logica.
+     * Een fout mag niet leiden tot het mislukken van een reeds verzonden notificatie.
+     */
     private fun safePublish(type: String, subject: String, block: () -> Unit) {
         try {
             block()
@@ -48,6 +52,7 @@ class NotificatieEventPublisher(
     }
 
     companion object {
+        // SECURITY: In productie moet dit het OIN uit de OIDC/mTLS security context zijn
         private const val SYSTEM_OIN = "00000001234567890000"
     }
 }

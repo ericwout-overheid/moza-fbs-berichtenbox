@@ -9,7 +9,7 @@ import java.util.UUID
  * @property id unieke identifier van de notificatie
  * @property ontvangerIdType type identificatie van de ontvanger
  * @property ontvangerId identificatie van de ontvanger
- * @property kanaal kanaal waarover de notificatie is verzonden
+ * @property kanaal kanaal waarover de notificatie wordt verzonden
  * @property onderwerp onderwerp van de notificatie
  * @property inhoud inhoud van de notificatie
  * @property status huidige status van de notificatie

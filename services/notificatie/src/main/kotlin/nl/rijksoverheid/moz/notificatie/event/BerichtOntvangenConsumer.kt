@@ -34,10 +34,10 @@ class BerichtOntvangenConsumer(
             objectMapper.readValue(data.toBytes(), Bericht::class.java)
         } catch (e: JsonProcessingException) {
             log.errorf(e, "Ongeldige JSON in bericht-ontvangen event: id=%s", event.id)
-            return
+            throw e
         } catch (e: IllegalArgumentException) {
             log.errorf(e, "Ongeldige data in bericht-ontvangen event: id=%s", event.id)
-            return
+            throw e
         }
 
         notificatieService.verwerkBerichtOntvangen(bericht)

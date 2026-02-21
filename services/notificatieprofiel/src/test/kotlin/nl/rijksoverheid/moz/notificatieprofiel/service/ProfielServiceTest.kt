@@ -127,6 +127,17 @@ class ProfielServiceTest {
         }
     }
 
+    @Test
+    fun `haalProfiel slaagt ook bij LDV logging fout`() {
+        val entity = createTestEntity()
+        every { profielRepository.vindOpOntvanger("999999999", OntvangerIdType.BSN) } returns entity
+        every { ldvLogger.logVerwerking(any()) } throws RuntimeException("LDV onbereikbaar")
+
+        val profiel = service.haalProfiel("999999999", OntvangerIdType.BSN)
+
+        assertEquals("999999999", profiel.ontvangerId)
+    }
+
     private fun createTestEntity() = ProfielEntity(
         ontvangerId = "999999999",
         ontvangerIdType = OntvangerIdType.BSN,

@@ -23,7 +23,8 @@ import java.net.URI
 import java.util.UUID
 
 /**
- * Service voor het aanmaken en opvragen van notificaties.
+ * Service voor het aanmaken, opvragen en verwerken van notificaties.
+ * Verwerkt inkomende bericht-ontvangen events via [verwerkBerichtOntvangen].
  * Het daadwerkelijk verzenden is gedelegeerd aan [NotificatieVerzendService].
  */
 @ApplicationScoped
@@ -63,9 +64,9 @@ class NotificatieService(
     /**
      * Haal de status op van een notificatie.
      *
-     * LDV-logging gebeurt via een fire-and-forget patroon: een fout in de logging
-     * mag het ophalen van de status niet blokkeren. Dit is conform het LDV-principe
-     * dat logging best-effort is en nooit de primaire functionaliteit mag hinderen.
+     * LDV-logging gebeurt best-effort: een fout in de logging mag het ophalen van
+     * de status niet blokkeren. Dit is conform het LDV-principe dat logging nooit
+     * de primaire functionaliteit mag hinderen.
      */
     @Transactional
     fun haalStatus(notificatieId: UUID): NotificatieStatus {
@@ -82,6 +83,7 @@ class NotificatieService(
                 )
             )
         } catch (e: Exception) {
+            // Breed catch-blok is intentioneel: LDV-logging is best-effort en mag de primaire functionaliteit niet blokkeren
             log.errorf(e, "LDV logging mislukt voor haalStatus: notificatieId=%s", notificatieId)
         }
 
@@ -108,11 +110,17 @@ class NotificatieService(
         val emailAdres = profiel.emailAdres
         if (profiel.emailNotificaties && !emailAdres.isNullOrBlank()) {
             verzendService.verzendNotificatie(bericht, NotificatieKanaal.EMAIL, emailAdres)
+        } else if (profiel.emailNotificaties) {
+            log.warnf("E-mailnotificaties ingeschakeld maar emailAdres is leeg: ontvanger=%s (type=%s)",
+                bericht.ontvangerId, bericht.ontvangerIdType)
         }
 
         val telefoonnummer = profiel.telefoonnummer
         if (profiel.smsNotificaties && !telefoonnummer.isNullOrBlank()) {
             verzendService.verzendNotificatie(bericht, NotificatieKanaal.SMS, telefoonnummer)
+        } else if (profiel.smsNotificaties) {
+            log.warnf("SMS-notificaties ingeschakeld maar telefoonnummer is leeg: ontvanger=%s (type=%s)",
+                bericht.ontvangerId, bericht.ontvangerIdType)
         }
     }
 }

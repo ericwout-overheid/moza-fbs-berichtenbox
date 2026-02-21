@@ -15,7 +15,7 @@ import nl.rijksoverheid.moz.common.model.BerichtStatus
 import nl.rijksoverheid.moz.common.model.OntvangerIdType
 import nl.rijksoverheid.moz.notificatie.service.NotificatieService
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertDoesNotThrow
+import com.fasterxml.jackson.core.JsonProcessingException
 import org.junit.jupiter.api.assertThrows
 import java.net.URI
 import java.time.Instant
@@ -76,14 +76,14 @@ class BerichtOntvangenConsumerTest {
     }
 
     @Test
-    fun `handelt deserialisatiefout af zonder exception`() {
+    fun `gooit deserialisatiefout door voor DLQ routing`() {
         val event = FbsCloudEventBuilder.build(
             source = source,
             type = FbsEventTypes.BERICHT_ONTVANGEN,
             data = "ongeldige json".toByteArray()
         )
 
-        assertDoesNotThrow {
+        assertThrows<JsonProcessingException> {
             consumer.onBerichtOntvangen(event)
         }
 

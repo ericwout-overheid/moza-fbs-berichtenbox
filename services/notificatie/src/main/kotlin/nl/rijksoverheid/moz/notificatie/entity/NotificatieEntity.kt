@@ -51,8 +51,8 @@ class NotificatieEntity(
     @Column(columnDefinition = "TEXT")
     var foutmelding: String? = null
 ) {
-    // Geen init{}-blok: Hibernate vereist een no-arg constructor en roept de
-    // primaire constructor niet aan bij het laden uit de database.
+    // No-arg constructor vereist door Hibernate. Default waarden in de primaire constructor
+    // dienen alleen Hibernate; validatie vindt plaats in de service-laag.
     protected constructor() : this(id = UUID.randomUUID())
 
     fun markeerVerzonden() {

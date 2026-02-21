@@ -27,10 +27,11 @@ class ProfielService(
     /**
      * Haal het notificatieprofiel op voor een ontvanger.
      *
-     * LDV-logging gebeurt via een fire-and-forget patroon: een fout in de logging
-     * mag het ophalen van het profiel niet blokkeren. Dit is conform het LDV-principe
-     * dat logging best-effort is en nooit de primaire functionaliteit mag hinderen.
+     * LDV-logging gebeurt best-effort: een fout in de logging mag het ophalen van
+     * het profiel niet blokkeren. Dit is conform het LDV-principe dat logging nooit
+     * de primaire functionaliteit mag hinderen.
      */
+    @Transactional
     fun haalProfiel(ontvangerId: String, ontvangerIdType: OntvangerIdType): Profiel {
         val entity = profielRepository.vindOpOntvanger(ontvangerId, ontvangerIdType)
             ?: throw ProfielNietGevondenException(ontvangerId, ontvangerIdType)
@@ -45,6 +46,7 @@ class ProfielService(
                 )
             )
         } catch (e: Exception) {
+            // Breed catch-blok is intentioneel: LDV-logging is best-effort en mag de primaire functionaliteit niet blokkeren
             log.errorf(e, "LDV logging mislukt voor haalProfiel: ontvangerId=%s", ontvangerId)
         }
 

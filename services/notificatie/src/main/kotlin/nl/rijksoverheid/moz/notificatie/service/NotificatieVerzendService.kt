@@ -17,6 +17,8 @@ import org.jboss.logging.Logger
  * Aparte bean voor het verzenden van notificaties zodat [Transactional] met [REQUIRES_NEW]
  * correct werkt. CDI interceptors worden alleen geactiveerd via de proxy, en self-invocation
  * binnen dezelfde bean omzeilt de proxy — waardoor @Transactional genegeerd wordt.
+ *
+ * Wordt aangeroepen door [NotificatieService.verwerkBerichtOntvangen] voor elk kanaal.
  */
 @ApplicationScoped
 class NotificatieVerzendService(
@@ -46,15 +48,15 @@ class NotificatieVerzendService(
 
         try {
             verzender.verzend(adres, bericht.onderwerp, bericht.inhoud)
-
-            entity.markeerVerzonden()
-            notificatieRepository.bewaar(entity)
-
-            eventPublisher.publishNotificatieVerzonden(NotificatieMapper.toDto(entity))
         } catch (e: Exception) {
             log.errorf(e, "Notificatie verzenden mislukt: kanaal=%s, ontvanger=%s", kanaal, bericht.ontvangerId)
             entity.markeerMislukt(e.message ?: "Onbekende fout")
             notificatieRepository.bewaar(entity)
+            return
         }
+
+        entity.markeerVerzonden()
+        notificatieRepository.bewaar(entity)
+        eventPublisher.publishNotificatieVerzonden(NotificatieMapper.toDto(entity))
     }
 }

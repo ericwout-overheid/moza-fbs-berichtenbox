@@ -2,7 +2,6 @@ package nl.rijksoverheid.moz.notificatieprofiel.resource
 
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.ws.rs.Consumes
-import jakarta.ws.rs.DefaultValue
 import jakarta.ws.rs.GET
 import jakarta.ws.rs.PUT
 import jakarta.ws.rs.Path
@@ -26,7 +25,7 @@ class ProfielResource(
     @Path("/{ontvangerId}")
     fun haalProfiel(
         @PathParam("ontvangerId") ontvangerId: String,
-        @QueryParam("ontvangerIdType") @DefaultValue("BSN") ontvangerIdType: OntvangerIdType
+        @QueryParam("ontvangerIdType") ontvangerIdType: OntvangerIdType
     ): Response {
         val profiel = profielService.haalProfiel(ontvangerId, ontvangerIdType)
         return Response.ok(profiel).build()
@@ -37,7 +36,7 @@ class ProfielResource(
     @Consumes(MediaType.APPLICATION_JSON)
     fun werkProfielBij(
         @PathParam("ontvangerId") ontvangerId: String,
-        @QueryParam("ontvangerIdType") @DefaultValue("BSN") ontvangerIdType: OntvangerIdType,
+        @QueryParam("ontvangerIdType") ontvangerIdType: OntvangerIdType,
         profiel: Profiel
     ): Response {
         val result = profielService.werkProfielBij(ontvangerId, ontvangerIdType, profiel)

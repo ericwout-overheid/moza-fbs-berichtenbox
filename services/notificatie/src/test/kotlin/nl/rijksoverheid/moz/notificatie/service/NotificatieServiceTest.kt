@@ -185,6 +185,23 @@ class NotificatieServiceTest {
     }
 
     @Test
+    fun `verwerkBerichtOntvangen verzendt niet bij emailNotificaties true maar emailAdres null`() {
+        val bericht = createTestBericht()
+        val profiel = mockk<Profiel> {
+            every { emailNotificaties } returns true
+            every { emailAdres } returns null
+            every { smsNotificaties } returns false
+            every { telefoonnummer } returns null
+        }
+
+        every { profielClient.haalProfiel("999999999", OntvangerIdType.BSN) } returns profiel
+
+        service.verwerkBerichtOntvangen(bericht)
+
+        verify(exactly = 0) { verzendService.verzendNotificatie(any(), any(), any()) }
+    }
+
+    @Test
     fun `verwerkBerichtOntvangen logt en gooit door bij ProcessingException`() {
         val bericht = createTestBericht()
         every { profielClient.haalProfiel("999999999", OntvangerIdType.BSN) } throws
@@ -193,6 +210,18 @@ class NotificatieServiceTest {
         assertThrows<ProcessingException> {
             service.verwerkBerichtOntvangen(bericht)
         }
+    }
+
+    @Test
+    fun `haalStatus slaagt ook bij LDV logging fout`() {
+        val notificatieId = UUID.randomUUID()
+        val entity = createTestEntity(notificatieId)
+        every { notificatieRepository.vindOpId(notificatieId) } returns entity
+        every { ldvLogger.logVerwerking(any()) } throws RuntimeException("LDV onbereikbaar")
+
+        val status = service.haalStatus(notificatieId)
+
+        assertEquals(notificatieId, status.notificatieId)
     }
 
     private fun createTestEntity(id: UUID = UUID.randomUUID()) = NotificatieEntity(
