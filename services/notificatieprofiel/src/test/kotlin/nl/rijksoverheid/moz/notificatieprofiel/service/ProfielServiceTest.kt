@@ -32,7 +32,7 @@ class ProfielServiceTest {
     }
 
     @Test
-    fun `haalProfiel returns profiel when found`() {
+    fun `haalProfiel geeft profiel terug wanneer gevonden`() {
         val entity = createTestEntity()
         every { profielRepository.vindOpOntvanger("999999999", OntvangerIdType.BSN) } returns entity
 
@@ -45,7 +45,7 @@ class ProfielServiceTest {
     }
 
     @Test
-    fun `haalProfiel throws exception when not found`() {
+    fun `haalProfiel gooit exception wanneer niet gevonden`() {
         every { profielRepository.vindOpOntvanger("999999999", OntvangerIdType.BSN) } returns null
 
         assertThrows<ProfielNietGevondenException> {
@@ -54,7 +54,7 @@ class ProfielServiceTest {
     }
 
     @Test
-    fun `werkProfielBij creates new profiel when not exists`() {
+    fun `werkProfielBij maakt nieuw profiel aan wanneer niet bestaat`() {
         every { profielRepository.vindOpOntvanger("999999999", OntvangerIdType.BSN) } returns null
         every { profielRepository.bewaar(any<ProfielEntity>()) } just Runs
 
@@ -77,7 +77,7 @@ class ProfielServiceTest {
     }
 
     @Test
-    fun `werkProfielBij updates existing profiel`() {
+    fun `werkProfielBij werkt bestaand profiel bij`() {
         val entity = createTestEntity()
         every { profielRepository.vindOpOntvanger("999999999", OntvangerIdType.BSN) } returns entity
         every { profielRepository.bewaar(any<ProfielEntity>()) } just Runs
@@ -100,7 +100,7 @@ class ProfielServiceTest {
     }
 
     @Test
-    fun `werkProfielBij rejects mismatched ontvangerId`() {
+    fun `werkProfielBij wijst niet-overeenkomend ontvangerId af`() {
         val profiel = Profiel(
             ontvangerId = "111111111",
             ontvangerIdType = OntvangerIdType.BSN,
@@ -114,7 +114,7 @@ class ProfielServiceTest {
     }
 
     @Test
-    fun `werkProfielBij rejects mismatched ontvangerIdType`() {
+    fun `werkProfielBij wijst niet-overeenkomend ontvangerIdType af`() {
         val profiel = Profiel(
             ontvangerId = "999999999",
             ontvangerIdType = OntvangerIdType.KVK,

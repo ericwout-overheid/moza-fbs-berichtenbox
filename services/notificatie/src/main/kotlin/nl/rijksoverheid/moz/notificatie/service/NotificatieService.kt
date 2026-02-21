@@ -1,13 +1,12 @@
 package nl.rijksoverheid.moz.notificatie.service
 
 import jakarta.enterprise.context.ApplicationScoped
-import jakarta.enterprise.inject.Instance
 import jakarta.transaction.Transactional
-import jakarta.transaction.Transactional.TxType.REQUIRES_NEW
+import jakarta.ws.rs.ProcessingException
 import jakarta.ws.rs.WebApplicationException
 import nl.rijksoverheid.moz.common.model.Bericht
-import nl.rijksoverheid.moz.common.model.Notificatie
 import nl.rijksoverheid.moz.common.model.NotificatieKanaal
+import nl.rijksoverheid.moz.common.model.Notificatie
 import nl.rijksoverheid.moz.common.model.NotificatieStatus
 import nl.rijksoverheid.moz.common.model.NotificatieStatusWaarde
 import nl.rijksoverheid.moz.common.model.NotificatieVerzoek
@@ -15,23 +14,24 @@ import nl.rijksoverheid.moz.ldv.LdvLogger
 import nl.rijksoverheid.moz.ldv.LdvVerwerking
 import nl.rijksoverheid.moz.notificatie.client.NotificatieprofielClient
 import nl.rijksoverheid.moz.notificatie.entity.NotificatieEntity
-import nl.rijksoverheid.moz.notificatie.event.NotificatieEventPublisher
 import nl.rijksoverheid.moz.notificatie.exception.NotificatieNietGevondenException
 import nl.rijksoverheid.moz.notificatie.mapping.NotificatieMapper
 import nl.rijksoverheid.moz.notificatie.repository.NotificatieRepository
 import org.eclipse.microprofile.rest.client.inject.RestClient
 import org.jboss.logging.Logger
 import java.net.URI
-import java.time.Instant
 import java.util.UUID
 
+/**
+ * Service voor het aanmaken en opvragen van notificaties.
+ * Het daadwerkelijk verzenden is gedelegeerd aan [NotificatieVerzendService].
+ */
 @ApplicationScoped
 class NotificatieService(
     private val notificatieRepository: NotificatieRepository,
-    private val verzenders: Instance<NotificatieVerzender>,
     @param:RestClient private val profielClient: NotificatieprofielClient,
     private val ldvLogger: LdvLogger,
-    private val eventPublisher: NotificatieEventPublisher
+    private val verzendService: NotificatieVerzendService
 ) {
 
     private val log = Logger.getLogger(NotificatieService::class.java)
@@ -60,6 +60,14 @@ class NotificatieService(
         }
     }
 
+    /**
+     * Haal de status op van een notificatie.
+     *
+     * LDV-logging gebeurt via een fire-and-forget patroon: een fout in de logging
+     * mag het ophalen van de status niet blokkeren. Dit is conform het LDV-principe
+     * dat logging best-effort is en nooit de primaire functionaliteit mag hinderen.
+     */
+    @Transactional
     fun haalStatus(notificatieId: UUID): NotificatieStatus {
         val entity = notificatieRepository.vindOpId(notificatieId)
             ?: throw NotificatieNietGevondenException(notificatieId)
@@ -80,6 +88,7 @@ class NotificatieService(
         return NotificatieMapper.toStatusDto(entity)
     }
 
+    @Transactional
     fun verwerkBerichtOntvangen(bericht: Bericht) {
         val profiel = try {
             profielClient.haalProfiel(bericht.ontvangerId, bericht.ontvangerIdType)
@@ -90,47 +99,20 @@ class NotificatieService(
                 return
             }
             throw e
+        } catch (e: ProcessingException) {
+            log.errorf(e, "Verbinding met notificatieprofiel-service mislukt voor ontvanger %s",
+                bericht.ontvangerId)
+            throw e
         }
 
         val emailAdres = profiel.emailAdres
         if (profiel.emailNotificaties && !emailAdres.isNullOrBlank()) {
-            verzendNotificatie(bericht, NotificatieKanaal.EMAIL, emailAdres)
+            verzendService.verzendNotificatie(bericht, NotificatieKanaal.EMAIL, emailAdres)
         }
 
         val telefoonnummer = profiel.telefoonnummer
         if (profiel.smsNotificaties && !telefoonnummer.isNullOrBlank()) {
-            verzendNotificatie(bericht, NotificatieKanaal.SMS, telefoonnummer)
-        }
-    }
-
-    @Transactional(REQUIRES_NEW)
-    internal fun verzendNotificatie(bericht: Bericht, kanaal: NotificatieKanaal, adres: String) {
-        val entity = NotificatieEntity(
-            ontvangerIdType = bericht.ontvangerIdType,
-            ontvangerId = bericht.ontvangerId,
-            kanaal = kanaal,
-            onderwerp = bericht.onderwerp,
-            inhoud = bericht.inhoud,
-            status = NotificatieStatusWaarde.AANGEMAAKT
-        )
-        notificatieRepository.bewaar(entity)
-
-        try {
-            val verzender = verzenders.stream()
-                .filter { it.kanaal == kanaal }
-                .findFirst()
-                .orElseThrow { IllegalStateException("Geen verzender gevonden voor kanaal $kanaal") }
-
-            verzender.verzend(adres, bericht.onderwerp, bericht.inhoud)
-
-            entity.markeerVerzonden()
-            notificatieRepository.bewaar(entity)
-
-            eventPublisher.publishNotificatieVerzonden(NotificatieMapper.toDto(entity))
-        } catch (e: Exception) {
-            log.errorf(e, "Notificatie verzenden mislukt: kanaal=%s, ontvanger=%s", kanaal, bericht.ontvangerId)
-            entity.markeerMislukt(e.message ?: "Onbekende fout")
-            notificatieRepository.bewaar(entity)
+            verzendService.verzendNotificatie(bericht, NotificatieKanaal.SMS, telefoonnummer)
         }
     }
 }

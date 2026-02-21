@@ -22,7 +22,7 @@ class ProfielEntity(
     val ontvangerId: String = "",
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "ontvanger_id_type", nullable = false, length = 4)
+    @Column(name = "ontvanger_id_type", nullable = false, length = 10)
     val ontvangerIdType: OntvangerIdType = OntvangerIdType.BSN,
 
     @Column(name = "email_notificaties", nullable = false)
@@ -47,6 +47,8 @@ class ProfielEntity(
     @Column(name = "bijgewerkt_op", nullable = false)
     var bijgewerktOp: Instant = Instant.now()
 ) {
+    // Geen init{}-blok: Hibernate vereist een no-arg constructor en roept de
+    // primaire constructor niet aan bij het laden uit de database.
     protected constructor() : this(id = UUID.randomUUID())
 
     fun werkBij(profiel: Profiel) {

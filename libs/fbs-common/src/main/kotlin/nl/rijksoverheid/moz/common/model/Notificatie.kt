@@ -28,4 +28,10 @@ data class Notificatie(
     val aangemaaktOp: Instant,
     val verzondenOp: Instant? = null,
     val afgeleverdOp: Instant? = null
-)
+) {
+    init {
+        require(ontvangerId.isNotBlank()) { "ontvangerId mag niet leeg zijn" }
+        require(onderwerp.isNotBlank()) { "onderwerp mag niet leeg zijn" }
+        require(inhoud.isNotBlank()) { "inhoud mag niet leeg zijn" }
+    }
+}

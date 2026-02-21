@@ -42,6 +42,7 @@ class NotificatieEventPublisher(
         try {
             block()
         } catch (e: Exception) {
+            // TODO: Voeg Micrometer metrics toe voor mislukte event publicaties
             log.errorf(e, "CloudEvent bouwen/publiceren mislukt: type=%s, subject=%s", type, subject)
         }
     }

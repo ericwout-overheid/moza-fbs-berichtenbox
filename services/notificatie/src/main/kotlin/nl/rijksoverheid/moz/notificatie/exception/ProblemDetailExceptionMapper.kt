@@ -9,6 +9,7 @@ import nl.rijksoverheid.moz.common.FbsConstants
 import nl.rijksoverheid.moz.common.model.ProblemDetail
 import org.jboss.logging.Logger
 
+// TODO: Extraheer gedeelde exception mapping logica naar fbs-common
 @Provider
 class ProblemDetailExceptionMapper : ExceptionMapper<Exception> {
 

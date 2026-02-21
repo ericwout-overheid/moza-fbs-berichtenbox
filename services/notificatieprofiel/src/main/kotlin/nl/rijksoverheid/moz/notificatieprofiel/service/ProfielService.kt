@@ -13,6 +13,9 @@ import nl.rijksoverheid.moz.notificatieprofiel.repository.ProfielRepository
 import org.jboss.logging.Logger
 import java.net.URI
 
+/**
+ * Service voor het beheren van notificatieprofielen van ontvangers.
+ */
 @ApplicationScoped
 class ProfielService(
     private val profielRepository: ProfielRepository,
@@ -21,6 +24,13 @@ class ProfielService(
 
     private val log = Logger.getLogger(ProfielService::class.java)
 
+    /**
+     * Haal het notificatieprofiel op voor een ontvanger.
+     *
+     * LDV-logging gebeurt via een fire-and-forget patroon: een fout in de logging
+     * mag het ophalen van het profiel niet blokkeren. Dit is conform het LDV-principe
+     * dat logging best-effort is en nooit de primaire functionaliteit mag hinderen.
+     */
     fun haalProfiel(ontvangerId: String, ontvangerIdType: OntvangerIdType): Profiel {
         val entity = profielRepository.vindOpOntvanger(ontvangerId, ontvangerIdType)
             ?: throw ProfielNietGevondenException(ontvangerId, ontvangerIdType)

@@ -19,7 +19,7 @@ class NotificatieEntity(
     val id: UUID = UUID.randomUUID(),
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "ontvanger_id_type", nullable = false, length = 4)
+    @Column(name = "ontvanger_id_type", nullable = false, length = 10)
     val ontvangerIdType: OntvangerIdType = OntvangerIdType.BSN,
 
     @Column(name = "ontvanger_id", nullable = false, length = 20)
@@ -36,7 +36,7 @@ class NotificatieEntity(
     val inhoud: String = "",
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 15)
     var status: NotificatieStatusWaarde = NotificatieStatusWaarde.AANGEMAAKT,
 
     @Column(name = "aangemaakt_op", nullable = false)
@@ -51,6 +51,8 @@ class NotificatieEntity(
     @Column(columnDefinition = "TEXT")
     var foutmelding: String? = null
 ) {
+    // Geen init{}-blok: Hibernate vereist een no-arg constructor en roept de
+    // primaire constructor niet aan bij het laden uit de database.
     protected constructor() : this(id = UUID.randomUUID())
 
     fun markeerVerzonden() {
