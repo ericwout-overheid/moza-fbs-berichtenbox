@@ -1,8 +1,8 @@
 package nl.rijksoverheid.moz.notificatieprofiel
 
 /**
- * Notificatieprofiel - notification preferences service for FBS.
+ * Notificatieprofiel - service voor het beheren van notificatievoorkeuren binnen het FBS.
  *
- * Manages notification preferences and channel configurations per recipient.
+ * Beheert notificatievoorkeuren en kanaalconfiguraties per ontvanger.
  */
 class NotificatieprofielApp

@@ -189,6 +189,9 @@ components:
         onderwerp:
           type: string
           description: Onderwerp van de notificatie
+        inhoud:
+          type: string
+          description: Inhoud van de notificatie
         status:
           $ref: '#/components/schemas/NotificatieStatusWaarde'
         verzondenOp:

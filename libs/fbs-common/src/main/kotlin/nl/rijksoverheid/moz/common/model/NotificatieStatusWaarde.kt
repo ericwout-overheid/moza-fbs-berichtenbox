@@ -10,7 +10,7 @@ enum class NotificatieStatusWaarde {
     /** Notificatie is verzonden naar het kanaal */
     VERZONDEN,
 
-    /** Notificatie is afgeleverd bij de ontvanger */
+    /** Notificatie is afgeleverd bij de ontvanger (nog niet in gebruik) */
     AFGELEVERD,
 
     /** Verzending van de notificatie is mislukt */

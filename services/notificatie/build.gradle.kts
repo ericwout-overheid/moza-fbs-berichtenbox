@@ -11,6 +11,10 @@ dependencies {
 
     implementation(libs.quarkus.kotlin)
     implementation(libs.quarkus.rest.jackson)
+    implementation(libs.quarkus.rest.client.jackson)
+    implementation(libs.quarkus.hibernate.orm.panache.kotlin)
+    implementation(libs.quarkus.jdbc.postgresql)
+    implementation(libs.quarkus.flyway)
     implementation(libs.quarkus.messaging.kafka)
     implementation(libs.quarkus.mailer)
     implementation(libs.quarkus.smallrye.openapi)
@@ -20,6 +24,7 @@ dependencies {
     testImplementation(libs.rest.assured.kotlin)
     testImplementation(libs.mockk)
     testImplementation(platform(libs.testcontainers.bom))
+    testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.testcontainers.kafka)
     testImplementation(libs.testcontainers.junit.jupiter)
 }
@@ -27,6 +32,7 @@ dependencies {
 allOpen {
     annotation("jakarta.ws.rs.Path")
     annotation("jakarta.enterprise.context.ApplicationScoped")
+    annotation("jakarta.persistence.Entity")
     annotation("io.quarkus.test.junit.QuarkusTest")
 }
 
