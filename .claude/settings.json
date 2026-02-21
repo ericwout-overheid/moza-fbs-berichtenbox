@@ -2,11 +2,20 @@
   "hooks": {
     "PreToolUse": [
       {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/scripts/inject-java-home.sh"
+          }
+        ]
+      },
+      {
         "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
-            "command": "filepath=$(echo \"$CLAUDE_TOOL_INPUT\" | grep -oP '\"file_path\"\\s*:\\s*\"\\K[^\"]+'); case \"$filepath\" in *.env|*.env.*|*.pem|*.key|*.crt|*.p12|*.jks|*gradle-wrapper.jar) echo 'BLOCK: Dit is een gevoelig bestand - handmatig bewerken vereist' >&2; exit 2;; esac"
+            "command": "filepath=$(echo \"$CLAUDE_TOOL_INPUT\" | grep -oP '\"file_path\"\\s*:\\s*\"\\K[^\"]+'); case \"$filepath\" in *.env|*.env.*|*.pem|*.key|*.crt|*.p12|*.jks|*gradle-wrapper.jar|*gradle-wrapper.properties|*.lock|*/build/generated/*) echo 'BLOCK: Dit is een gevoelig of gegenereerd bestand - handmatig bewerken vereist' >&2; exit 2;; esac"
           }
         ]
       }
