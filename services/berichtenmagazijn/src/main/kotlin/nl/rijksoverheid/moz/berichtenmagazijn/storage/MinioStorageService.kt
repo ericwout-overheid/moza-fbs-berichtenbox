@@ -23,7 +23,7 @@ class MinioStorageService(
             PutObjectArgs.builder()
                 .bucket(bucket)
                 .`object`(objectKey)
-                .stream(inputStream, size, -1) // partSize -1 = use MinIO default (5 MiB)
+                .stream(inputStream, size, -1) // partSize -1 = MinIO SDK bepaalt automatisch
                 .contentType(contentType)
                 .build()
         )
@@ -40,7 +40,12 @@ class MinioStorageService(
     }
 
     companion object {
-        fun objectKey(berichtId: java.util.UUID, bijlageId: java.util.UUID, bestandsnaam: String): String =
-            "berichten/$berichtId/bijlagen/$bijlageId/$bestandsnaam"
+        fun objectKey(berichtId: java.util.UUID, bijlageId: java.util.UUID, bestandsnaam: String): String {
+            val safeName = bestandsnaam
+                .replace(Regex("[/\\\\]"), "_")
+                .replace(Regex("[^a-zA-Z0-9._\\-]"), "_")
+                .take(255)
+            return "berichten/$berichtId/bijlagen/$bijlageId/$safeName"
+        }
     }
 }

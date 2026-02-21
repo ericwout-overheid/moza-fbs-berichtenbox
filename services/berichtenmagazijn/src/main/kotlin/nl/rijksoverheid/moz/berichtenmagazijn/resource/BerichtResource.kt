@@ -66,6 +66,7 @@ class BerichtResource(
         @PathParam("berichtId") berichtId: UUID,
         wijziging: BerichtStatusWijziging
     ): Response {
+        // SECURITY: autorisatie vereist (FTV/AuthZEN) — nog niet geïmplementeerd.
         val bericht = berichtService.werkBerichtBij(berichtId, wijziging)
         if (wijziging.status == BerichtStatus.GELEZEN) {
             eventPublisher.publishBerichtGelezen(bericht.afzenderOin, bericht)
@@ -76,6 +77,7 @@ class BerichtResource(
     @DELETE
     @Path("/{berichtId}")
     fun verwijderBericht(@PathParam("berichtId") berichtId: UUID): Response {
+        // SECURITY: autorisatie vereist (FTV/AuthZEN) — nog niet geïmplementeerd.
         val afzenderOin = berichtService.verwijderBericht(berichtId)
         eventPublisher.publishBerichtVerwijderd(afzenderOin, berichtId)
         return Response.noContent().build()

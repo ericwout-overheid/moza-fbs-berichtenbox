@@ -20,6 +20,7 @@ import nl.rijksoverheid.moz.common.FbsConstants
 import nl.rijksoverheid.moz.ldv.LdvLogger
 import org.jboss.logging.Logger
 import nl.rijksoverheid.moz.ldv.LdvVerwerking
+import java.io.IOException
 import java.io.InputStream
 import java.net.URI
 import java.time.Instant
@@ -62,14 +63,18 @@ class BerichtService(
         val entity = berichtRepository.vindOpId(berichtId)
             ?: throw BerichtNietGevondenException(berichtId)
 
-        ldvLogger.logVerwerking(
-            LdvVerwerking(
-                verwerkingsActiviteitId = URI("https://fbs.nl/verwerkingen/bericht-ophalen"),
-                betrokkeneId = entity.ontvangerId,
-                betrokkeneIdType = entity.ontvangerIdType.name,
-                operatieNaam = "haalBericht"
+        try {
+            ldvLogger.logVerwerking(
+                LdvVerwerking(
+                    verwerkingsActiviteitId = URI("https://fbs.nl/verwerkingen/bericht-ophalen"),
+                    betrokkeneId = entity.ontvangerId,
+                    betrokkeneIdType = entity.ontvangerIdType.name,
+                    operatieNaam = "haalBericht"
+                )
             )
-        )
+        } catch (e: Exception) {
+            log.errorf(e, "LDV logging mislukt voor haalBericht: berichtId=%s", berichtId)
+        }
 
         return BerichtMapper.toDto(entity)
     }
@@ -83,6 +88,9 @@ class BerichtService(
     ): Page<Bericht> {
         require((ontvangerIdType == null) == (ontvangerId == null)) {
             "ontvangerIdType en ontvangerId moeten samen opgegeven worden"
+        }
+        require(status == null || (ontvangerIdType != null && ontvangerId != null)) {
+            "status filter vereist ontvangerIdType en ontvangerId"
         }
         require(page >= 1) { "page moet >= 1 zijn" }
         require(pageSize >= 1) { "pageSize moet >= 1 zijn" }
@@ -168,14 +176,18 @@ class BerichtService(
                 operatieNaam = "verwijderBericht"
             )
         ) {
-            berichtRepository.verwijderOpId(berichtId)
+            val deleted = berichtRepository.verwijderOpId(berichtId)
+            if (!deleted) throw BerichtNietGevondenException(berichtId)
         }
 
-        // MinIO cleanup buiten transactie (best-effort)
+        // MinIO cleanup best-effort: fouten worden gelogd maar niet doorgegooid
         objectKeys.forEach { objectKey ->
             try {
                 storageService.delete(objectKey)
-            } catch (e: Exception) {
+            } catch (e: IOException) {
+                log.errorf(e, "MinIO object verwijderen mislukt (IO): objectKey=%s, berichtId=%s",
+                    objectKey, berichtId)
+            } catch (e: RuntimeException) {
                 log.errorf(e, "MinIO object verwijderen mislukt: objectKey=%s, berichtId=%s",
                     objectKey, berichtId)
             }
@@ -199,26 +211,30 @@ class BerichtService(
 
         storageService.upload(objectKey, inputStream, mediaType, grootte)
 
+        val bijlage = BijlageEntity(
+            id = bijlageId,
+            bericht = bericht,
+            bestandsnaam = bestandsnaam,
+            mediaType = mediaType,
+            grootte = grootte,
+            objectKey = objectKey
+        )
+
         try {
-            val bijlage = BijlageEntity(
-                id = bijlageId,
-                bericht = bericht,
-                bestandsnaam = bestandsnaam,
-                mediaType = mediaType,
-                grootte = grootte,
-                objectKey = objectKey
-            )
             bijlageRepository.bewaar(bijlage)
-            return BerichtMapper.toBijlageDto(bijlage)
         } catch (e: Exception) {
             log.errorf(e, "Database persist mislukt na MinIO upload, opruimen: objectKey=%s", objectKey)
             try {
                 storageService.delete(objectKey)
-            } catch (cleanupEx: Exception) {
+            } catch (cleanupEx: IOException) {
+                log.errorf(cleanupEx, "Compenserende MinIO delete mislukt, orphaned object: objectKey=%s", objectKey)
+            } catch (cleanupEx: RuntimeException) {
                 log.errorf(cleanupEx, "Compenserende MinIO delete mislukt, orphaned object: objectKey=%s", objectKey)
             }
             throw e
         }
+
+        return BerichtMapper.toBijlageDto(bijlage)
     }
 
     fun lijstBijlagen(berichtId: UUID): List<BijlageMetadata> {

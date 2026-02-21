@@ -22,23 +22,37 @@ class BerichtEventPublisher(
     private val log = Logger.getLogger(BerichtEventPublisher::class.java)
 
     fun publishBerichtOntvangen(afzenderOin: String, bericht: Bericht) {
-        val event = buildEvent(afzenderOin, FbsEventTypes.BERICHT_ONTVANGEN, bericht)
-        sendEvent(ontvangenEmitter, event, FbsEventTypes.BERICHT_ONTVANGEN, bericht.id.toString())
+        safePublish(FbsEventTypes.BERICHT_ONTVANGEN, bericht.id.toString()) {
+            val event = buildEvent(afzenderOin, FbsEventTypes.BERICHT_ONTVANGEN, bericht)
+            sendEvent(ontvangenEmitter, event, FbsEventTypes.BERICHT_ONTVANGEN, bericht.id.toString())
+        }
     }
 
     fun publishBerichtGelezen(afzenderOin: String, bericht: Bericht) {
-        val event = buildEvent(afzenderOin, FbsEventTypes.BERICHT_GELEZEN, bericht)
-        sendEvent(gelezenEmitter, event, FbsEventTypes.BERICHT_GELEZEN, bericht.id.toString())
+        safePublish(FbsEventTypes.BERICHT_GELEZEN, bericht.id.toString()) {
+            val event = buildEvent(afzenderOin, FbsEventTypes.BERICHT_GELEZEN, bericht)
+            sendEvent(gelezenEmitter, event, FbsEventTypes.BERICHT_GELEZEN, bericht.id.toString())
+        }
     }
 
     fun publishBerichtVerwijderd(afzenderOin: String, berichtId: java.util.UUID) {
-        val source = FbsSourceUrn.create(afzenderOin, "berichtenmagazijn")
-        val event = FbsCloudEventBuilder.build(
-            source = source,
-            type = FbsEventTypes.BERICHT_VERWIJDERD,
-            subject = berichtId.toString()
-        )
-        sendEvent(verwijderdEmitter, event, FbsEventTypes.BERICHT_VERWIJDERD, berichtId.toString())
+        safePublish(FbsEventTypes.BERICHT_VERWIJDERD, berichtId.toString()) {
+            val source = FbsSourceUrn.create(afzenderOin, "berichtenmagazijn")
+            val event = FbsCloudEventBuilder.build(
+                source = source,
+                type = FbsEventTypes.BERICHT_VERWIJDERD,
+                subject = berichtId.toString()
+            )
+            sendEvent(verwijderdEmitter, event, FbsEventTypes.BERICHT_VERWIJDERD, berichtId.toString())
+        }
+    }
+
+    private fun safePublish(type: String, subject: String, block: () -> Unit) {
+        try {
+            block()
+        } catch (e: Exception) {
+            log.errorf(e, "CloudEvent bouwen/publiceren mislukt: type=%s, subject=%s", type, subject)
+        }
     }
 
     private fun sendEvent(emitter: Emitter<CloudEvent>, event: CloudEvent, type: String, subject: String) {

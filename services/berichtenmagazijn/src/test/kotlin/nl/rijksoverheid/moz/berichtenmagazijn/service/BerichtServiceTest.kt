@@ -331,6 +331,100 @@ class BerichtServiceTest {
         assertEquals(100, page.paginaGrootte)
     }
 
+    @Test
+    fun `lijstBerichten rejects pageSize less than 1`() {
+        assertThrows<IllegalArgumentException> {
+            service.lijstBerichten(null, null, null, 1, 0)
+        }
+    }
+
+    @Test
+    fun `lijstBerichten rejects status filter without ontvanger`() {
+        assertThrows<IllegalArgumentException> {
+            service.lijstBerichten(null, null, BerichtStatus.NIEUW, 1, 20)
+        }
+    }
+
+    @Test
+    fun `werkBerichtBij throws exception when not found`() {
+        val berichtId = UUID.randomUUID()
+        every { berichtRepository.vindOpId(berichtId) } returns null
+
+        assertThrows<BerichtNietGevondenException> {
+            service.werkBerichtBij(berichtId, BerichtStatusWijziging(BerichtStatus.GELEZEN))
+        }
+    }
+
+    @Test
+    fun `werkBerichtBij with GEARCHIVEERD does not set gelezenOp`() {
+        val berichtId = UUID.randomUUID()
+        val entity = createTestEntity(berichtId)
+
+        every { berichtRepository.vindOpId(berichtId) } returns entity
+        every { berichtRepository.bewaar(any<BerichtEntity>()) } just Runs
+
+        val bericht = service.werkBerichtBij(berichtId, BerichtStatusWijziging(BerichtStatus.GEARCHIVEERD))
+
+        assertEquals(BerichtStatus.GEARCHIVEERD, bericht.status)
+        assertNull(bericht.gelezenOp)
+    }
+
+    @Test
+    fun `verwijderBericht throws exception when not found`() {
+        val berichtId = UUID.randomUUID()
+        every { berichtRepository.vindOpId(berichtId) } returns null
+
+        assertThrows<BerichtNietGevondenException> {
+            service.verwijderBericht(berichtId)
+        }
+    }
+
+    @Test
+    fun `verwijderBericht continues when MinIO delete fails`() {
+        val berichtId = UUID.randomUUID()
+        val entity = createTestEntity(berichtId)
+        val bijlage1 = BijlageEntity(
+            bericht = entity, bestandsnaam = "a.pdf",
+            mediaType = "application/pdf", grootte = 1024, objectKey = "key1"
+        )
+        val bijlage2 = BijlageEntity(
+            bericht = entity, bestandsnaam = "b.pdf",
+            mediaType = "application/pdf", grootte = 2048, objectKey = "key2"
+        )
+        entity.bijlagen.addAll(listOf(bijlage1, bijlage2))
+
+        every { berichtRepository.vindOpId(berichtId) } returns entity
+        every { berichtRepository.verwijderOpId(berichtId) } returns true
+        every { storageService.delete("key1") } throws RuntimeException("MinIO down")
+        every { storageService.delete("key2") } just Runs
+
+        val afzenderOin = service.verwijderBericht(berichtId)
+
+        assertEquals(testOin, afzenderOin)
+        verify(exactly = 1) { storageService.delete("key1") }
+        verify(exactly = 1) { storageService.delete("key2") }
+    }
+
+    @Test
+    fun `uploadBijlage compensates MinIO on DB persist failure`() {
+        val berichtId = UUID.randomUUID()
+        val entity = createTestEntity(berichtId)
+
+        every { berichtRepository.vindOpId(berichtId) } returns entity
+        every { storageService.upload(any(), any(), any(), any()) } just Runs
+        every { bijlageRepository.bewaar(any<BijlageEntity>()) } throws RuntimeException("DB error")
+        every { storageService.delete(any()) } just Runs
+
+        assertThrows<RuntimeException> {
+            service.uploadBijlage(
+                berichtId, "test.pdf", "application/pdf",
+                ByteArrayInputStream("data".toByteArray()), 4L
+            )
+        }
+
+        verify { storageService.delete(any()) }
+    }
+
     private fun createTestEntity(id: UUID = UUID.randomUUID()) = BerichtEntity(
         id = id,
         afzenderOin = testOin,

@@ -33,11 +33,16 @@ class BijlageResource(
         @PathParam("berichtId") berichtId: UUID,
         @RestForm("bestand") bestand: FileUpload
     ): Response {
+        val bestandsnaam = bestand.fileName()
+        require(!bestandsnaam.isNullOrBlank()) { "bestandsnaam mag niet leeg zijn" }
+        require(bestandsnaam.length <= 255) { "bestandsnaam mag maximaal 255 tekens bevatten" }
+        val mediaType = bestand.contentType() ?: "application/octet-stream"
+
         val bijlage = bestand.filePath().toFile().inputStream().use { inputStream ->
             berichtService.uploadBijlage(
                 berichtId = berichtId,
-                bestandsnaam = bestand.fileName(),
-                mediaType = bestand.contentType(),
+                bestandsnaam = bestandsnaam,
+                mediaType = mediaType,
                 inputStream = inputStream,
                 grootte = bestand.size()
             )

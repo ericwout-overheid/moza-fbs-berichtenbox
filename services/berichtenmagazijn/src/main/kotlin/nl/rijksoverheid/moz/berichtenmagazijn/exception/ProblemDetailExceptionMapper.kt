@@ -45,11 +45,18 @@ class ProblemDetailExceptionMapper : ExceptionMapper<Exception> {
 
             is WebApplicationException -> {
                 val httpStatus = Response.Status.fromStatusCode(exception.response.status)
-                    ?: Response.Status.INTERNAL_SERVER_ERROR
-                httpStatus to ProblemDetail(
-                    title = httpStatus.reasonPhrase,
-                    status = httpStatus.statusCode,
-                    detail = exception.message
+                if (httpStatus == null) {
+                    log.warnf("Onbekende HTTP statuscode: %d", exception.response.status)
+                }
+                val effectiveStatus = httpStatus ?: Response.Status.INTERNAL_SERVER_ERROR
+                if (effectiveStatus.family == Response.Status.Family.SERVER_ERROR) {
+                    log.errorf(exception, "Server fout: status=%d", effectiveStatus.statusCode)
+                }
+                effectiveStatus to ProblemDetail(
+                    title = effectiveStatus.reasonPhrase,
+                    status = effectiveStatus.statusCode,
+                    detail = if (effectiveStatus.family == Response.Status.Family.SERVER_ERROR)
+                        "Er is een serverfout opgetreden" else exception.message
                 )
             }
 
