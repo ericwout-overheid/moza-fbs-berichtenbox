@@ -60,6 +60,20 @@ class FbsClientTest {
     }
 
     @Test
+    fun `deriveUrl gooit bij ongeldige URL`() {
+        assertThrows<FbsException> {
+            FbsClient.Builder.deriveUrl("not a valid url %%%", 8081)
+        }
+    }
+
+    @Test
+    fun `deriveUrl gooit bij URL zonder scheme`() {
+        assertThrows<IllegalArgumentException> {
+            FbsClient.Builder.deriveUrl("localhost:8080", 8081)
+        }
+    }
+
+    @Test
     fun `builder accepteert custom httpClient`() {
         val customClient = HttpClient.newHttpClient()
         val client = FbsClient.builder()

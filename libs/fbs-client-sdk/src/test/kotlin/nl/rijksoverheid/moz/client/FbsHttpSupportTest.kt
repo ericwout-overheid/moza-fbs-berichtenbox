@@ -228,6 +228,32 @@ class FbsHttpSupportTest {
     }
 
     @Test
+    fun `null response body gooit FbsException`() {
+        val response = mockk<HttpResponse<String>>()
+        every { response.statusCode() } returns 200
+        every { response.body() } returns null
+
+        val headers = mockk<java.net.http.HttpHeaders>()
+        every { headers.firstValue("Content-Type") } returns java.util.Optional.empty()
+        every { response.headers() } returns headers
+
+        @Suppress("UNCHECKED_CAST")
+        every {
+            httpClient.send(any<HttpRequest>(), any<HttpResponse.BodyHandler<String>>())
+        } returns response as HttpResponse<String>
+
+        val request = support.requestBuilder(URI.create("http://localhost/test"))
+            .GET()
+            .build()
+
+        val exception = assertThrows<FbsException> {
+            support.execute(request, Map::class.java)
+        }
+        assertEquals(200, exception.statusCode)
+        assertTrue(exception.message!!.contains("Lege response body"))
+    }
+
+    @Test
     fun `jsonBody gooit FbsException bij serialisatiefout`() {
         // Een object dat niet te serialiseren is
         val exception = assertThrows<FbsException> {

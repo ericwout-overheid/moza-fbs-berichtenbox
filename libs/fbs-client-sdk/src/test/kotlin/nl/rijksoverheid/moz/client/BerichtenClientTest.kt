@@ -164,6 +164,31 @@ class BerichtenClientTest {
     }
 
     @Test
+    fun `uploadBijlage sanitiseert bestandsnaam met quotes en CRLF`() {
+        mockResponse(201, bijlageJson())
+
+        val requestSlot = slot<HttpRequest>()
+        val inhoud = ByteArrayInputStream("test".toByteArray())
+        client.uploadBijlage(berichtId, "evil\"\r\nInjected: true\r\nfile.pdf", "application/pdf", inhoud)
+
+        verify { httpClient.send(capture(requestSlot), any<HttpResponse.BodyHandler<String>>()) }
+        // Verify the filename in the multipart body does not contain raw quotes or CRLF
+        val body = requestSlot.captured.bodyPublisher().get()
+        val bytes = java.nio.ByteBuffer.allocate(4096)
+        body.subscribe(object : java.util.concurrent.Flow.Subscriber<java.nio.ByteBuffer> {
+            override fun onSubscribe(s: java.util.concurrent.Flow.Subscription) { s.request(Long.MAX_VALUE) }
+            override fun onNext(item: java.nio.ByteBuffer) { bytes.put(item) }
+            override fun onError(throwable: Throwable) {}
+            override fun onComplete() {}
+        })
+        Thread.sleep(50)
+        bytes.flip()
+        val bodyStr = String(bytes.array(), 0, bytes.limit())
+        // The filename should have quotes replaced and CRLF stripped
+        assertTrue(bodyStr.contains("filename=\"evil_Injected: truefile.pdf\""))
+    }
+
+    @Test
     fun `fout HTTP status gooit FbsException`() {
         mockResponse(404, """{"type":"about:blank","title":"Not Found","status":404}""",
             contentType = "application/problem+json")
