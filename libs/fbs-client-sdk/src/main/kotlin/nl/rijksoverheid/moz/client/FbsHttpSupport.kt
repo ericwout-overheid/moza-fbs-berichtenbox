@@ -162,8 +162,13 @@ internal class FbsHttpSupport(
 
     @Suppress("UNCHECKED_CAST")
     private fun <T> deserialize(response: HttpResponse<String>, javaType: JavaType): T {
+        val body = response.body()
+            ?: throw FbsException(
+                "Lege response body bij statuscode ${response.statusCode()}",
+                statusCode = response.statusCode()
+            )
         return try {
-            objectMapper.readValue(response.body(), javaType) as T
+            objectMapper.readValue(body, javaType) as T
         } catch (e: JsonProcessingException) {
             throw FbsException(
                 "Fout bij verwerken response: ${e.message}",

@@ -78,7 +78,14 @@ class FbsClient private constructor(
 
         internal companion object {
             fun deriveUrl(baseUrl: String, targetPort: Int): String {
-                val uri = URI.create(baseUrl.trimEnd('/'))
+                val uri = try {
+                    URI.create(baseUrl.trimEnd('/'))
+                } catch (e: IllegalArgumentException) {
+                    throw FbsException("Ongeldige URL: $baseUrl", cause = e)
+                }
+                requireNotNull(uri.scheme) { "URL mist scheme (http/https): $baseUrl" }
+                requireNotNull(uri.host) { "URL mist host: $baseUrl" }
+
                 val port = if (uri.port == -1) {
                     if (uri.scheme == "https") 443 else 80
                 } else {

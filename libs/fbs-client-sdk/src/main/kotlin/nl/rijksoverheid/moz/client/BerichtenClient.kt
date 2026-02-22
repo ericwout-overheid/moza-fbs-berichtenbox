@@ -135,10 +135,14 @@ class BerichtenClient internal constructor(
         mediaType: String,
         bytes: ByteArray
     ): ByteArray {
+        val sanitized = bestandsnaam
+            .replace("\"", "_")
+            .replace("\r", "")
+            .replace("\n", "")
         val crlf = "\r\n"
         val builder = StringBuilder()
         builder.append("--$boundary$crlf")
-        builder.append("Content-Disposition: form-data; name=\"bestand\"; filename=\"$bestandsnaam\"$crlf")
+        builder.append("Content-Disposition: form-data; name=\"bestand\"; filename=\"$sanitized\"$crlf")
         builder.append("Content-Type: $mediaType$crlf")
         builder.append(crlf)
 
