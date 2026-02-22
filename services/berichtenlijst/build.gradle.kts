@@ -7,28 +7,22 @@ plugins {
 dependencies {
     implementation(project(":libs:fbs-common"))
     implementation(project(":libs:fbs-ldv"))
-    implementation(project(":libs:fbs-authzen-client"))
 
     implementation(libs.quarkus.kotlin)
     implementation(libs.quarkus.rest.jackson)
-    implementation(libs.quarkus.jdbc.postgresql)
+    implementation(libs.quarkus.rest.client.jackson)
     implementation(libs.quarkus.smallrye.openapi)
-    implementation(libs.quarkus.oidc)
     implementation(libs.quarkus.cache)
     implementation(libs.jackson.module.kotlin)
 
     testImplementation(libs.quarkus.junit5)
     testImplementation(libs.rest.assured.kotlin)
     testImplementation(libs.mockk)
-    testImplementation(platform(libs.testcontainers.bom))
-    testImplementation(libs.testcontainers.postgresql)
-    testImplementation(libs.testcontainers.junit.jupiter)
 }
 
 allOpen {
     annotation("jakarta.ws.rs.Path")
     annotation("jakarta.enterprise.context.ApplicationScoped")
-    annotation("jakarta.persistence.Entity")
     annotation("io.quarkus.test.junit.QuarkusTest")
 }
 
