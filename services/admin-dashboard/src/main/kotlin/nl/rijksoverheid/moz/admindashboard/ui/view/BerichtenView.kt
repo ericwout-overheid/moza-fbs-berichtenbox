@@ -80,7 +80,7 @@ class BerichtenView @Inject constructor(
             page = huidigePagina, pageSize = pageSize, status = huidigeStatus
         )
         if (result.isFout) {
-            Notification.show(result.foutmelding, 5000, Notification.Position.TOP_CENTER)
+            Notification.show(result.foutmelding ?: "Onbekende fout", 5000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR)
         }
         val pagina = result.data

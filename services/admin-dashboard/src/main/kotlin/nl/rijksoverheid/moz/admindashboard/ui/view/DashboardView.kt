@@ -16,6 +16,7 @@ import nl.rijksoverheid.moz.admindashboard.service.ServiceStatus
 import nl.rijksoverheid.moz.admindashboard.ui.component.StatCard
 import nl.rijksoverheid.moz.admindashboard.ui.component.StatusBadge
 import nl.rijksoverheid.moz.common.model.Bericht
+import org.jboss.logging.Logger
 
 @Route("")
 @PageTitle("Dashboard - FBS Admin")
@@ -24,6 +25,8 @@ class DashboardView @Inject constructor(
     private val healthChecker: ServiceHealthChecker
 ) : VerticalLayout() {
 
+    private val log = Logger.getLogger(DashboardView::class.java)
+
     init {
         add(H2("Dashboard"))
         laadOverzicht()
@@ -31,10 +34,17 @@ class DashboardView @Inject constructor(
 
     private fun laadOverzicht() {
         val berichtenResult = dataService.haalBerichten(page = 1, pageSize = 5)
-        val services = healthChecker.checkAll()
+        val services = try {
+            healthChecker.checkAll()
+        } catch (e: Exception) {
+            log.errorf(e, "Health checks konden niet worden uitgevoerd")
+            Notification.show("Systeemstatus kon niet worden opgehaald", 5000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR)
+            emptyList()
+        }
 
         if (berichtenResult.isFout) {
-            Notification.show(berichtenResult.foutmelding, 5000, Notification.Position.TOP_CENTER)
+            Notification.show(berichtenResult.foutmelding ?: "Onbekende fout", 5000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR)
         }
 
@@ -58,7 +68,7 @@ class DashboardView @Inject constructor(
         serviceGrid.addColumn({ it.naam }).setHeader("Service")
         serviceGrid.addComponentColumn { StatusBadge.voorBeschikbaarheid(it.beschikbaar) }
             .setHeader("Status")
-        serviceGrid.addColumn({ it.responseTimeMs }).setHeader("Response (ms)")
+        serviceGrid.addColumn({ it.responseTimeMs?.toString() ?: "-" }).setHeader("Response (ms)")
         serviceGrid.setItems(services)
         serviceGrid.height = "auto"
         add(serviceGrid)

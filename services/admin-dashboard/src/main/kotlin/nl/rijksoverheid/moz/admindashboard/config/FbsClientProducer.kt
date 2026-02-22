@@ -7,42 +7,49 @@ import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.jboss.logging.Logger
 
 @ApplicationScoped
-class FbsClientProducer {
+class FbsClientProducer(
+    @param:ConfigProperty(name = "fbs.berichtenmagazijn.url")
+    private val berichtenmagazijnUrl: String,
 
+    @param:ConfigProperty(name = "fbs.berichtenlijst.url")
+    private val berichtenlijstUrl: String,
+
+    @param:ConfigProperty(name = "fbs.notificatie.url")
+    private val notificatieUrl: String,
+
+    @param:ConfigProperty(name = "fbs.notificatieprofiel.url")
+    private val notificatieprofielUrl: String,
+
+    @param:ConfigProperty(name = "fbs.bereikbaarheid.url")
+    private val bereikbaarheidUrl: String,
+
+    @param:ConfigProperty(name = "fbs.admin.bearer-token")
+    private val bearerToken: String
+) {
     private val log = Logger.getLogger(FbsClientProducer::class.java)
-
-    @ConfigProperty(name = "fbs.berichtenmagazijn.url")
-    lateinit var berichtenmagazijnUrl: String
-
-    @ConfigProperty(name = "fbs.berichtenlijst.url")
-    lateinit var berichtenlijstUrl: String
-
-    @ConfigProperty(name = "fbs.notificatie.url")
-    lateinit var notificatieUrl: String
-
-    @ConfigProperty(name = "fbs.notificatieprofiel.url")
-    lateinit var notificatieprofielUrl: String
-
-    @ConfigProperty(name = "fbs.bereikbaarheid.url")
-    lateinit var bereikbaarheidUrl: String
-
-    @ConfigProperty(name = "fbs.admin.bearer-token")
-    lateinit var bearerToken: String
 
     @Produces
     @ApplicationScoped
     fun fbsClient(): FbsClient {
+        if (bearerToken.isBlank()) {
+            log.errorf("fbs.admin.bearer-token is leeg — stel FBS_ADMIN_BEARER_TOKEN omgevingsvariabele in")
+        }
         log.infof(
             "FbsClient configuratie: magazijn=%s, lijst=%s, notificatie=%s, profiel=%s, bereikbaarheid=%s",
             berichtenmagazijnUrl, berichtenlijstUrl, notificatieUrl, notificatieprofielUrl, bereikbaarheidUrl
         )
-        return FbsClient.builder()
-            .berichtenmagazijnUrl(berichtenmagazijnUrl)
-            .berichtenlijstUrl(berichtenlijstUrl)
-            .notificatieUrl(notificatieUrl)
-            .notificatieprofielUrl(notificatieprofielUrl)
-            .bereikbaarheidUrl(bereikbaarheidUrl)
-            .bearerToken(bearerToken)
-            .build()
+        return try {
+            FbsClient.builder()
+                .berichtenmagazijnUrl(berichtenmagazijnUrl)
+                .berichtenlijstUrl(berichtenlijstUrl)
+                .notificatieUrl(notificatieUrl)
+                .notificatieprofielUrl(notificatieprofielUrl)
+                .bereikbaarheidUrl(bereikbaarheidUrl)
+                .bearerToken(bearerToken.ifBlank { null })
+                .build()
+        } catch (e: Exception) {
+            log.errorf(e, "FbsClient initialisatie mislukt — controleer fbs.*.url en fbs.admin.bearer-token configuratie")
+            throw e
+        }
     }
 }
