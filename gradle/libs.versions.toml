@@ -70,7 +70,7 @@ opentelemetry-sdk-testing = { module = "io.opentelemetry:opentelemetry-sdk-testi
 
 # Vaadin
 vaadin-bom = { module = "com.vaadin:vaadin-bom", version.ref = "vaadin" }
-vaadin-quarkus = { module = "com.vaadin:vaadin-quarkus" }
+vaadin-quarkus = { module = "com.vaadin:vaadin-quarkus-extension", version.ref = "vaadin" }
 vaadin-core = { module = "com.vaadin:vaadin-core" }
 
 # Testing
