@@ -37,7 +37,7 @@ class BerichtenlijstServiceTest {
     @Test
     fun `haalBerichtenlijst geeft gemapte records terug`() {
         every {
-            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20)
+            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20, null)
         } returns createTestPage()
 
         val result = service.haalBerichtenlijst(OntvangerIdType.BSN, "999999999", 1, 20)
@@ -48,27 +48,15 @@ class BerichtenlijstServiceTest {
     }
 
     @Test
-    fun `zoekBerichten filtert op onderwerp`() {
+    fun `zoekBerichten stuurt zoekterm naar server`() {
         every {
-            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20)
-        } returns createTestPage()
+            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20, "belasting")
+        } returns createFilteredPage("belasting")
 
         val result = service.zoekBerichten(OntvangerIdType.BSN, "999999999", "belasting", 1, 20)
 
         assertEquals(1, result.resultaten.size)
         assertEquals("Belastingaanslag 2025", result.resultaten[0].onderwerp)
-    }
-
-    @Test
-    fun `zoekBerichten is case-insensitive`() {
-        every {
-            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20)
-        } returns createTestPage()
-
-        val result = service.zoekBerichten(OntvangerIdType.BSN, "999999999", "VERGUNNING", 1, 20)
-
-        assertEquals(1, result.resultaten.size)
-        assertEquals("Vergunning verleend", result.resultaten[0].onderwerp)
     }
 
     @Test
@@ -81,19 +69,18 @@ class BerichtenlijstServiceTest {
     @Test
     fun `zoekBerichten met zoekterm van 2 tekens slaagt`() {
         every {
-            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20)
-        } returns createTestPage()
+            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20, "be")
+        } returns createFilteredPage("be")
 
         val result = service.zoekBerichten(OntvangerIdType.BSN, "999999999", "be", 1, 20)
 
         assertEquals(1, result.resultaten.size)
-        assertEquals("Belastingaanslag 2025", result.resultaten[0].onderwerp)
     }
 
     @Test
     fun `haalBerichtenlijst kapt pageSize af op maximum`() {
         every {
-            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, FbsConstants.MAX_PAGE_SIZE)
+            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, FbsConstants.MAX_PAGE_SIZE, null)
         } returns createTestPage()
 
         val result = service.haalBerichtenlijst(OntvangerIdType.BSN, "999999999", 1, 999)
@@ -104,7 +91,7 @@ class BerichtenlijstServiceTest {
     @Test
     fun `haalBerichtenlijst corrigeert page naar minimum 1`() {
         every {
-            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20)
+            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20, null)
         } returns createTestPage()
 
         val result = service.haalBerichtenlijst(OntvangerIdType.BSN, "999999999", 0, 20)
@@ -115,7 +102,7 @@ class BerichtenlijstServiceTest {
     @Test
     fun `haalBerichtenlijst propageert ProcessingException van REST client`() {
         every {
-            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20)
+            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20, null)
         } throws ProcessingException("Connection refused")
 
         assertThrows<ProcessingException> {
@@ -124,10 +111,16 @@ class BerichtenlijstServiceTest {
     }
 
     @Test
-    fun `zoekBerichten geeft lege resultaten wanneer filter alles verwijdert`() {
+    fun `zoekBerichten geeft lege resultaten wanneer server niets vindt`() {
         every {
-            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20)
-        } returns createTestPage()
+            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20, "onbestaand")
+        } returns Page(
+            resultaten = emptyList(),
+            pagina = 1,
+            paginaGrootte = 20,
+            totaalPaginas = 0,
+            totaalElementen = 0L
+        )
 
         val result = service.zoekBerichten(OntvangerIdType.BSN, "999999999", "onbestaand", 1, 20)
 
@@ -140,7 +133,7 @@ class BerichtenlijstServiceTest {
     fun `haalBerichtenlijst slaagt ook bij LDV logging fout`() {
         every { ldvLogger.logVerwerking(any()) } throws RuntimeException("LDV onbereikbaar")
         every {
-            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20)
+            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20, null)
         } returns createTestPage()
 
         val result = service.haalBerichtenlijst(OntvangerIdType.BSN, "999999999", 1, 20)
@@ -179,6 +172,18 @@ class BerichtenlijstServiceTest {
             paginaGrootte = 20,
             totaalPaginas = 1,
             totaalElementen = berichten.size.toLong()
+        )
+    }
+
+    private fun createFilteredPage(zoekterm: String): Page<Bericht> {
+        val allBerichten = createTestPage().resultaten
+        val filtered = allBerichten.filter { it.onderwerp.contains(zoekterm, ignoreCase = true) }
+        return Page(
+            resultaten = filtered,
+            pagina = 1,
+            paginaGrootte = 20,
+            totaalPaginas = if (filtered.isEmpty()) 0 else 1,
+            totaalElementen = filtered.size.toLong()
         )
     }
 }

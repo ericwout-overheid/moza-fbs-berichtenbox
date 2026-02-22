@@ -43,4 +43,22 @@ class BerichtRepository : PanacheRepositoryBase<BerichtEntity, UUID> {
 
     fun countByOntvangerAndStatus(idType: OntvangerIdType, id: String, status: BerichtStatus): Long =
         count("ontvangerIdType = ?1 and ontvangerId = ?2 and status = ?3", idType, id, status)
+
+    fun findByOntvangerAndOnderwerp(
+        idType: OntvangerIdType,
+        id: String,
+        onderwerp: String,
+        page: Int,
+        size: Int
+    ): List<BerichtEntity> =
+        find(
+            "ontvangerIdType = ?1 and ontvangerId = ?2 and lower(onderwerp) like lower(?3) order by aangemaaktOp desc",
+            idType, id, "%$onderwerp%"
+        ).page(page, size).list()
+
+    fun countByOntvangerAndOnderwerp(idType: OntvangerIdType, id: String, onderwerp: String): Long =
+        count(
+            "ontvangerIdType = ?1 and ontvangerId = ?2 and lower(onderwerp) like lower(?3)",
+            idType, id, "%$onderwerp%"
+        )
 }

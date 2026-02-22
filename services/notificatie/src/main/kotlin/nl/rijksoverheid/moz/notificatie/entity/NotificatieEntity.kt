@@ -36,7 +36,7 @@ class NotificatieEntity(
     val inhoud: String = "",
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 15)
+    @Column(nullable = false, length = 20)
     var status: NotificatieStatusWaarde = NotificatieStatusWaarde.AANGEMAAKT,
 
     @Column(name = "aangemaakt_op", nullable = false)
@@ -49,7 +49,10 @@ class NotificatieEntity(
     var afgeleverdOp: Instant? = null,
 
     @Column(columnDefinition = "TEXT")
-    var foutmelding: String? = null
+    var foutmelding: String? = null,
+
+    @Column(nullable = false)
+    var pogingen: Int = 0
 ) {
     // No-arg constructor vereist door Hibernate. Default waarden in de primaire constructor
     // dienen alleen Hibernate; validatie vindt plaats in de service-laag.
@@ -69,5 +72,22 @@ class NotificatieEntity(
         }
         status = NotificatieStatusWaarde.MISLUKT
         this.foutmelding = foutmelding
+        this.pogingen++
+    }
+
+    fun markeerVoorRetry() {
+        check(status == NotificatieStatusWaarde.MISLUKT) {
+            "Kan alleen MISLUKT notificaties opnieuw proberen, huidige status: $status"
+        }
+        status = NotificatieStatusWaarde.AANGEMAAKT
+    }
+
+    fun markeerDefinitiefMislukt(foutmelding: String) {
+        check(status == NotificatieStatusWaarde.MISLUKT || status == NotificatieStatusWaarde.AANGEMAAKT) {
+            "Kan notificatie niet definitief markeren, huidige status: $status"
+        }
+        status = NotificatieStatusWaarde.DEFINITIEF_MISLUKT
+        this.foutmelding = foutmelding
+        this.pogingen++
     }
 }

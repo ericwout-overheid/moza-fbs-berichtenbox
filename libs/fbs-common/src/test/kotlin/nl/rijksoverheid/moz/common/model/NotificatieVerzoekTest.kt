@@ -1,5 +1,6 @@
 package nl.rijksoverheid.moz.common.model
 
+import nl.rijksoverheid.moz.common.FbsConstants
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
@@ -52,7 +53,7 @@ class NotificatieVerzoekTest {
                 ontvangerIdType = OntvangerIdType.BSN,
                 ontvangerId = "123456789",
                 kanaal = NotificatieKanaal.EMAIL,
-                onderwerp = "a".repeat(200),
+                onderwerp = "a".repeat(FbsConstants.MAX_ONDERWERP_LENGTH),
                 inhoud = "Test inhoud"
             )
         }
@@ -65,7 +66,7 @@ class NotificatieVerzoekTest {
                 ontvangerIdType = OntvangerIdType.BSN,
                 ontvangerId = "123456789",
                 kanaal = NotificatieKanaal.EMAIL,
-                onderwerp = "a".repeat(201),
+                onderwerp = "a".repeat(FbsConstants.MAX_ONDERWERP_LENGTH + 1),
                 inhoud = "Test inhoud"
             )
         }

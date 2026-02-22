@@ -10,6 +10,7 @@ import nl.rijksoverheid.moz.digitalebereikbaarheid.mapping.BereikbaarheidMapper
 import nl.rijksoverheid.moz.digitalebereikbaarheid.repository.BereikbaarheidRepository
 import nl.rijksoverheid.moz.ldv.LdvLogger
 import nl.rijksoverheid.moz.ldv.LdvVerwerking
+import nl.rijksoverheid.moz.common.util.PiiMasker
 import org.jboss.logging.Logger
 import java.net.URI
 import java.time.Instant
@@ -38,7 +39,7 @@ class BereikbaarheidService(
             )
         } catch (e: Exception) {
             // Breed catch-blok is intentioneel: LDV-logging is best-effort en mag de primaire functionaliteit niet blokkeren
-            log.errorf(e, "LDV logging mislukt voor haalBereikbaarheid: ontvangerId=%s", ontvangerId)
+            log.errorf(e, "LDV logging mislukt voor haalBereikbaarheid: ontvangerId=%s", PiiMasker.mask(ontvangerId))
         }
 
         return BereikbaarheidMapper.toDto(entity)

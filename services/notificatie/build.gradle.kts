@@ -17,6 +17,7 @@ dependencies {
     implementation(libs.quarkus.flyway)
     implementation(libs.quarkus.messaging.kafka)
     implementation(libs.quarkus.mailer)
+    implementation(libs.quarkus.scheduler)
     implementation(libs.quarkus.smallrye.openapi)
     implementation(libs.jackson.module.kotlin)
 

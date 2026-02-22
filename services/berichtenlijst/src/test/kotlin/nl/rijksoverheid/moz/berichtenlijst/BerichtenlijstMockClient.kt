@@ -20,7 +20,8 @@ class BerichtenlijstMockClient : BerichtenmagazijnClient {
         ontvangerIdType: OntvangerIdType,
         ontvangerId: String,
         page: Int,
-        pageSize: Int
+        pageSize: Int,
+        onderwerp: String?
     ): Page<Bericht> {
         val berichten = listOf(
             Bericht(
@@ -46,12 +47,18 @@ class BerichtenlijstMockClient : BerichtenmagazijnClient {
             )
         )
 
+        val filtered = if (!onderwerp.isNullOrBlank()) {
+            berichten.filter { it.onderwerp.contains(onderwerp, ignoreCase = true) }
+        } else {
+            berichten
+        }
+
         return Page(
-            resultaten = berichten,
+            resultaten = filtered,
             pagina = page,
             paginaGrootte = pageSize,
-            totaalPaginas = 1,
-            totaalElementen = berichten.size.toLong()
+            totaalPaginas = if (filtered.isEmpty()) 0 else 1,
+            totaalElementen = filtered.size.toLong()
         )
     }
 }

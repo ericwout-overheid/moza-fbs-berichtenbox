@@ -19,6 +19,7 @@ import nl.rijksoverheid.moz.common.model.BerichtAanmaakVerzoek
 import nl.rijksoverheid.moz.common.model.BerichtStatus
 import nl.rijksoverheid.moz.common.model.BerichtStatusWijziging
 import nl.rijksoverheid.moz.common.model.OntvangerIdType
+import org.eclipse.microprofile.config.inject.ConfigProperty
 import java.util.UUID
 
 @Path("/api/v1/berichten")
@@ -26,15 +27,14 @@ import java.util.UUID
 @Produces(MediaType.APPLICATION_JSON)
 class BerichtResource(
     private val berichtService: BerichtService,
-    private val eventPublisher: BerichtEventPublisher
+    private val eventPublisher: BerichtEventPublisher,
+    @ConfigProperty(name = "fbs.dev.afzender-oin") private val afzenderOin: String
 ) {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     fun maakBericht(verzoek: BerichtAanmaakVerzoek): Response {
         // SECURITY: In productie moet afzenderOin uit de OIDC/mTLS security context komen.
-        // Zonder dit worden alle berichten toegeschreven aan een vast test-OIN.
-        val afzenderOin = DEV_AFZENDER_OIN
         val bericht = berichtService.maakBericht(afzenderOin, verzoek)
         eventPublisher.publishBerichtOntvangen(afzenderOin, bericht)
         return Response.status(Response.Status.CREATED).entity(bericht).build()
@@ -45,10 +45,11 @@ class BerichtResource(
         @QueryParam("ontvangerIdType") ontvangerIdType: OntvangerIdType?,
         @QueryParam("ontvangerId") ontvangerId: String?,
         @QueryParam("status") status: BerichtStatus?,
+        @QueryParam("onderwerp") onderwerp: String?,
         @QueryParam("page") @DefaultValue("1") page: Int,
         @QueryParam("pageSize") @DefaultValue("20") pageSize: Int
     ): Response {
-        val pagina = berichtService.lijstBerichten(ontvangerIdType, ontvangerId, status, page, pageSize)
+        val pagina = berichtService.lijstBerichten(ontvangerIdType, ontvangerId, status, onderwerp, page, pageSize)
         return Response.ok(pagina).build()
     }
 
@@ -83,7 +84,4 @@ class BerichtResource(
         return Response.noContent().build()
     }
 
-    companion object {
-        private const val DEV_AFZENDER_OIN = "00000001234567890000"
-    }
 }
