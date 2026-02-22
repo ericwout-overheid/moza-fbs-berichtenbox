@@ -3,7 +3,9 @@ package nl.rijksoverheid.moz.berichtenmagazijn.storage
 import io.minio.MinioClient
 import io.minio.PutObjectArgs
 import io.minio.RemoveObjectArgs
+import io.minio.errors.MinioException
 import jakarta.enterprise.context.ApplicationScoped
+import nl.rijksoverheid.moz.berichtenmagazijn.exception.StorageException
 import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.jboss.logging.Logger
 import java.io.InputStream
@@ -19,24 +21,34 @@ class MinioStorageService(
 
     fun upload(objectKey: String, inputStream: InputStream, contentType: String, size: Long) {
         log.debugf("MinIO upload: bucket=%s, objectKey=%s, size=%d", bucket, objectKey, size)
-        minioClient.putObject(
-            PutObjectArgs.builder()
-                .bucket(bucket)
-                .`object`(objectKey)
-                .stream(inputStream, size, -1) // partSize -1 = MinIO SDK bepaalt automatisch
-                .contentType(contentType)
-                .build()
-        )
+        try {
+            minioClient.putObject(
+                PutObjectArgs.builder()
+                    .bucket(bucket)
+                    .`object`(objectKey)
+                    .stream(inputStream, size, -1) // partSize -1 = MinIO SDK bepaalt automatisch
+                    .contentType(contentType)
+                    .build()
+            )
+        } catch (e: MinioException) {
+            log.errorf(e, "MinIO upload mislukt: bucket=%s, objectKey=%s", bucket, objectKey)
+            throw StorageException("Bijlage opslaan mislukt", e)
+        }
     }
 
     fun delete(objectKey: String) {
         log.debugf("MinIO delete: bucket=%s, objectKey=%s", bucket, objectKey)
-        minioClient.removeObject(
-            RemoveObjectArgs.builder()
-                .bucket(bucket)
-                .`object`(objectKey)
-                .build()
-        )
+        try {
+            minioClient.removeObject(
+                RemoveObjectArgs.builder()
+                    .bucket(bucket)
+                    .`object`(objectKey)
+                    .build()
+            )
+        } catch (e: MinioException) {
+            log.errorf(e, "MinIO delete mislukt: bucket=%s, objectKey=%s", bucket, objectKey)
+            throw StorageException("Bijlage verwijderen mislukt", e)
+        }
     }
 
     companion object {

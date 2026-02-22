@@ -22,7 +22,7 @@ class NotificatieEventPublisherTest {
     private val emitter = mockk<Emitter<CloudEvent>>()
     private val objectMapper = ObjectMapper().registerModule(JavaTimeModule())
 
-    private val publisher = NotificatieEventPublisher(emitter, objectMapper)
+    private val publisher = NotificatieEventPublisher(emitter, objectMapper, "00000001234567890000")
 
     @Test
     fun `publishNotificatieVerzonden verstuurt CloudEvent via emitter`() {

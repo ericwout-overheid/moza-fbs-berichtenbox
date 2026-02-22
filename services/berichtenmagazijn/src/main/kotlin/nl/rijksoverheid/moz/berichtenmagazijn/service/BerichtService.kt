@@ -83,6 +83,7 @@ class BerichtService(
         ontvangerIdType: OntvangerIdType?,
         ontvangerId: String?,
         status: BerichtStatus?,
+        onderwerp: String?,
         page: Int,
         pageSize: Int
     ): Page<Bericht> {
@@ -103,7 +104,14 @@ class BerichtService(
             val entities: List<BerichtEntity>
             val total: Long
 
-            if (status != null) {
+            if (!onderwerp.isNullOrBlank()) {
+                entities = berichtRepository.findByOntvangerAndOnderwerp(
+                    ontvangerIdType, ontvangerId, onderwerp, zeroBasedPage, effectivePageSize
+                )
+                total = berichtRepository.countByOntvangerAndOnderwerp(
+                    ontvangerIdType, ontvangerId, onderwerp
+                )
+            } else if (status != null) {
                 entities = berichtRepository.findByOntvangerAndStatus(
                     ontvangerIdType, ontvangerId, status, zeroBasedPage, effectivePageSize
                 )

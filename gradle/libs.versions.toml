@@ -22,6 +22,12 @@ testcontainers = "2.0.3"
 rest-assured = "6.0.0"
 
 [libraries]
+# Jakarta RS API
+jakarta-ws-rs-api = { module = "jakarta.ws.rs:jakarta.ws.rs-api", version = "4.0.0" }
+
+# JBoss Logging
+jboss-logging = { module = "org.jboss.logging:jboss-logging", version = "3.6.1.Final" }
+
 # Quarkus BOM
 quarkus-bom = { module = "io.quarkus.platform:quarkus-bom", version.ref = "quarkus" }
 

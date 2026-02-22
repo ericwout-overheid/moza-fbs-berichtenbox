@@ -153,8 +153,9 @@ internal class FbsHttpSupport(
 
         if (!contentType.contains(FbsConstants.MEDIA_TYPE_PROBLEM_JSON)) return null
 
+        val body = response.body() ?: return null
         return try {
-            objectMapper.readValue(response.body(), ProblemDetail::class.java)
+            objectMapper.readValue(body, ProblemDetail::class.java)
         } catch (_: JsonProcessingException) {
             null
         }

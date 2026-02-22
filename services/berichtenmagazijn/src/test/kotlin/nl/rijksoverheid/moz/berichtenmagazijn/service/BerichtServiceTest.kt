@@ -118,7 +118,7 @@ class BerichtServiceTest {
             )
         } returns 1L
 
-        val page = service.lijstBerichten(OntvangerIdType.BSN, "999999999", BerichtStatus.NIEUW, 1, 20)
+        val page = service.lijstBerichten(OntvangerIdType.BSN, "999999999", BerichtStatus.NIEUW, null, 1, 20)
 
         assertEquals(1, page.resultaten.size)
         assertEquals(1, page.pagina)
@@ -136,7 +136,7 @@ class BerichtServiceTest {
             berichtRepository.countByOntvanger(OntvangerIdType.BSN, "999999999")
         } returns 1L
 
-        val page = service.lijstBerichten(OntvangerIdType.BSN, "999999999", null, 1, 20)
+        val page = service.lijstBerichten(OntvangerIdType.BSN, "999999999", null, null, 1, 20)
 
         assertEquals(1, page.resultaten.size)
         assertEquals(1L, page.totaalElementen)
@@ -152,7 +152,7 @@ class BerichtServiceTest {
         every { query.page(0, 20) } returns query
         every { query.list() } returns listOf(entity)
 
-        val page = service.lijstBerichten(null, null, null, 1, 20)
+        val page = service.lijstBerichten(null, null, null, null, 1, 20)
 
         assertEquals(1, page.resultaten.size)
         assertEquals(1L, page.totaalElementen)
@@ -305,14 +305,14 @@ class BerichtServiceTest {
     @Test
     fun `lijstBerichten rejects partial filter parameters`() {
         assertThrows<IllegalArgumentException> {
-            service.lijstBerichten(OntvangerIdType.BSN, null, null, 1, 20)
+            service.lijstBerichten(OntvangerIdType.BSN, null, null, null, 1, 20)
         }
     }
 
     @Test
     fun `lijstBerichten rejects page less than 1`() {
         assertThrows<IllegalArgumentException> {
-            service.lijstBerichten(null, null, null, 0, 20)
+            service.lijstBerichten(null, null, null, null, 0, 20)
         }
     }
 
@@ -326,7 +326,7 @@ class BerichtServiceTest {
         every { query.page(0, 100) } returns query
         every { query.list() } returns listOf(entity)
 
-        val page = service.lijstBerichten(null, null, null, 1, 500)
+        val page = service.lijstBerichten(null, null, null, null, 1, 500)
 
         assertEquals(100, page.paginaGrootte)
     }
@@ -334,14 +334,14 @@ class BerichtServiceTest {
     @Test
     fun `lijstBerichten rejects pageSize less than 1`() {
         assertThrows<IllegalArgumentException> {
-            service.lijstBerichten(null, null, null, 1, 0)
+            service.lijstBerichten(null, null, null, null, 1, 0)
         }
     }
 
     @Test
     fun `lijstBerichten rejects status filter without ontvanger`() {
         assertThrows<IllegalArgumentException> {
-            service.lijstBerichten(null, null, BerichtStatus.NIEUW, 1, 20)
+            service.lijstBerichten(null, null, BerichtStatus.NIEUW, null, 1, 20)
         }
     }
 

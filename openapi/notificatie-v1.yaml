@@ -139,6 +139,7 @@ components:
         - VERZONDEN
         - AFGELEVERD
         - MISLUKT
+        - DEFINITIEF_MISLUKT
       description: Mogelijke statussen van een notificatie
 
     NotificatieVerzoek:
@@ -162,7 +163,7 @@ components:
         onderwerp:
           type: string
           description: Onderwerp van de notificatie
-          maxLength: 200
+          maxLength: 500
           examples:
             - "U heeft een nieuw bericht"
         inhoud:

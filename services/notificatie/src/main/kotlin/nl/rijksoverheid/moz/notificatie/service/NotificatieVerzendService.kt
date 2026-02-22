@@ -7,6 +7,7 @@ import jakarta.transaction.Transactional.TxType.REQUIRES_NEW
 import nl.rijksoverheid.moz.common.model.Bericht
 import nl.rijksoverheid.moz.common.model.NotificatieKanaal
 import nl.rijksoverheid.moz.common.model.NotificatieStatusWaarde
+import nl.rijksoverheid.moz.common.util.PiiMasker
 import nl.rijksoverheid.moz.notificatie.entity.NotificatieEntity
 import nl.rijksoverheid.moz.notificatie.event.NotificatieEventPublisher
 import nl.rijksoverheid.moz.notificatie.mapping.NotificatieMapper
@@ -49,7 +50,7 @@ class NotificatieVerzendService(
         try {
             verzender.verzend(adres, bericht.onderwerp, bericht.inhoud)
         } catch (e: Exception) {
-            log.errorf(e, "Notificatie verzenden mislukt: kanaal=%s, ontvanger=%s", kanaal, bericht.ontvangerId)
+            log.errorf(e, "Notificatie verzenden mislukt: kanaal=%s, ontvanger=%s", kanaal, PiiMasker.mask(bericht.ontvangerId))
             entity.markeerMislukt(e.message ?: "Onbekende fout")
             notificatieRepository.bewaar(entity)
             return

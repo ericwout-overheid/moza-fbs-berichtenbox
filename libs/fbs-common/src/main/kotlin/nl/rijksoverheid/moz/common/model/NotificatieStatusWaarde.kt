@@ -14,5 +14,8 @@ enum class NotificatieStatusWaarde {
     AFGELEVERD,
 
     /** Verzending van de notificatie is mislukt */
-    MISLUKT
+    MISLUKT,
+
+    /** Verzending is definitief mislukt na maximaal aantal pogingen */
+    DEFINITIEF_MISLUKT
 }

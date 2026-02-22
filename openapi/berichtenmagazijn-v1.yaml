@@ -112,6 +112,11 @@ paths:
           schema:
             $ref: '#/components/schemas/BerichtStatus'
           description: Filter op berichtstatus
+        - name: onderwerp
+          in: query
+          schema:
+            type: string
+          description: Zoek in onderwerp (case-insensitive)
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
       responses:

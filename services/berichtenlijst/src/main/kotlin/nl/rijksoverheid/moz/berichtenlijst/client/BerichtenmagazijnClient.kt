@@ -17,6 +17,7 @@ interface BerichtenmagazijnClient {
         @QueryParam("ontvangerIdType") ontvangerIdType: OntvangerIdType,
         @QueryParam("ontvangerId") ontvangerId: String,
         @QueryParam("page") page: Int,
-        @QueryParam("pageSize") pageSize: Int
+        @QueryParam("pageSize") pageSize: Int,
+        @QueryParam("onderwerp") onderwerp: String?
     ): Page<Bericht>
 }

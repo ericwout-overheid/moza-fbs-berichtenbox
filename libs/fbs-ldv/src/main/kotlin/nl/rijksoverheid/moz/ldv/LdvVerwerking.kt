@@ -15,4 +15,10 @@ data class LdvVerwerking(
     val betrokkeneId: String,
     val betrokkeneIdType: String,
     val operatieNaam: String
-)
+) {
+    init {
+        require(betrokkeneId.isNotBlank()) { "betrokkeneId mag niet leeg zijn" }
+        require(betrokkeneIdType.isNotBlank()) { "betrokkeneIdType mag niet leeg zijn" }
+        require(operatieNaam.isNotBlank()) { "operatieNaam mag niet leeg zijn" }
+    }
+}

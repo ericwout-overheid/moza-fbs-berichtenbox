@@ -5,6 +5,8 @@ plugins {
 
 dependencies {
     api(libs.jackson.module.kotlin)
+    api(libs.jakarta.ws.rs.api)
+    api(libs.jboss.logging)
 
     testImplementation(libs.mockk)
     testImplementation(kotlin("test"))

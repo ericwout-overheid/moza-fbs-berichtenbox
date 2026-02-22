@@ -10,6 +10,7 @@ import nl.rijksoverheid.moz.common.model.Notificatie
 import nl.rijksoverheid.moz.common.model.NotificatieStatus
 import nl.rijksoverheid.moz.common.model.NotificatieStatusWaarde
 import nl.rijksoverheid.moz.common.model.NotificatieVerzoek
+import nl.rijksoverheid.moz.common.util.PiiMasker
 import nl.rijksoverheid.moz.ldv.LdvLogger
 import nl.rijksoverheid.moz.ldv.LdvVerwerking
 import nl.rijksoverheid.moz.notificatie.client.NotificatieprofielClient
@@ -97,13 +98,13 @@ class NotificatieService(
         } catch (e: WebApplicationException) {
             if (e.response.status == 404) {
                 log.infof("Geen profiel gevonden voor ontvanger %s (type %s), notificatie overgeslagen",
-                    bericht.ontvangerId, bericht.ontvangerIdType)
+                    PiiMasker.mask(bericht.ontvangerId), bericht.ontvangerIdType)
                 return
             }
             throw e
         } catch (e: ProcessingException) {
             log.errorf(e, "Verbinding met notificatieprofiel-service mislukt voor ontvanger %s",
-                bericht.ontvangerId)
+                PiiMasker.mask(bericht.ontvangerId))
             throw e
         }
 
@@ -112,7 +113,7 @@ class NotificatieService(
             verzendService.verzendNotificatie(bericht, NotificatieKanaal.EMAIL, emailAdres)
         } else if (profiel.emailNotificaties) {
             log.warnf("E-mailnotificaties ingeschakeld maar emailAdres is leeg: ontvanger=%s (type=%s)",
-                bericht.ontvangerId, bericht.ontvangerIdType)
+                PiiMasker.mask(bericht.ontvangerId), bericht.ontvangerIdType)
         }
 
         val telefoonnummer = profiel.telefoonnummer
@@ -120,7 +121,7 @@ class NotificatieService(
             verzendService.verzendNotificatie(bericht, NotificatieKanaal.SMS, telefoonnummer)
         } else if (profiel.smsNotificaties) {
             log.warnf("SMS-notificaties ingeschakeld maar telefoonnummer is leeg: ontvanger=%s (type=%s)",
-                bericht.ontvangerId, bericht.ontvangerIdType)
+                PiiMasker.mask(bericht.ontvangerId), bericht.ontvangerIdType)
         }
     }
 }

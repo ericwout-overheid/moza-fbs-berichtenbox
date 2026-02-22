@@ -10,6 +10,7 @@ import nl.rijksoverheid.moz.notificatieprofiel.entity.ProfielEntity
 import nl.rijksoverheid.moz.notificatieprofiel.exception.ProfielNietGevondenException
 import nl.rijksoverheid.moz.notificatieprofiel.mapping.ProfielMapper
 import nl.rijksoverheid.moz.notificatieprofiel.repository.ProfielRepository
+import nl.rijksoverheid.moz.common.util.PiiMasker
 import org.jboss.logging.Logger
 import java.net.URI
 
@@ -47,7 +48,7 @@ class ProfielService(
             )
         } catch (e: Exception) {
             // Breed catch-blok is intentioneel: LDV-logging is best-effort en mag de primaire functionaliteit niet blokkeren
-            log.errorf(e, "LDV logging mislukt voor haalProfiel: ontvangerId=%s", ontvangerId)
+            log.errorf(e, "LDV logging mislukt voor haalProfiel: ontvangerId=%s", PiiMasker.mask(ontvangerId))
         }
 
         return ProfielMapper.toDto(entity)
