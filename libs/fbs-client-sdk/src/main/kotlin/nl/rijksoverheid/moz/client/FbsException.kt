@@ -13,4 +13,10 @@ class FbsException(
     val statusCode: Int? = null,
     val problemDetail: ProblemDetail? = null,
     cause: Throwable? = null
-) : RuntimeException(message, cause)
+) : RuntimeException(message, cause) {
+    init {
+        require(problemDetail == null || statusCode != null) {
+            "problemDetail vereist een statusCode"
+        }
+    }
+}

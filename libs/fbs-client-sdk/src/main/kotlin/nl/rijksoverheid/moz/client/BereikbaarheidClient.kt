@@ -21,7 +21,7 @@ class BereikbaarheidClient internal constructor(
         traceparent: String? = null
     ): Bereikbaarheid {
         val uri = URI.create(
-            "$bereikbaarheidUrl/$ontvangerId?ontvangerIdType=${ontvangerIdType.name}"
+            "$bereikbaarheidUrl/${FbsHttpSupport.urlEncode(ontvangerId)}?ontvangerIdType=${ontvangerIdType.name}"
         )
         val request = http.requestBuilder(uri, traceparent)
             .GET()
@@ -37,7 +37,7 @@ class BereikbaarheidClient internal constructor(
         traceparent: String? = null
     ): Bereikbaarheid {
         val uri = URI.create(
-            "$bereikbaarheidUrl/$ontvangerId?ontvangerIdType=${ontvangerIdType.name}"
+            "$bereikbaarheidUrl/${FbsHttpSupport.urlEncode(ontvangerId)}?ontvangerIdType=${ontvangerIdType.name}"
         )
         val request = http.requestBuilder(uri, traceparent)
             .header("Content-Type", "application/json")

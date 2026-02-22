@@ -1,6 +1,7 @@
 package nl.rijksoverheid.moz.client
 
 import nl.rijksoverheid.moz.common.model.*
+import java.io.IOException
 import java.io.InputStream
 import java.net.URI
 import java.net.http.HttpRequest
@@ -39,7 +40,7 @@ class BerichtenClient internal constructor(
     ): Page<Bericht> {
         val params = buildList {
             ontvangerIdType?.let { add("ontvangerIdType=${it.name}") }
-            ontvangerId?.let { add("ontvangerId=$it") }
+            ontvangerId?.let { add("ontvangerId=${FbsHttpSupport.urlEncode(it)}") }
             status?.let { add("status=${it.name}") }
             add("page=$page")
             add("pageSize=$pageSize")
@@ -97,11 +98,7 @@ class BerichtenClient internal constructor(
             .GET()
             .build()
 
-        val listType = http.objectMapper.typeFactory.constructCollectionType(
-            List::class.java,
-            BijlageMetadata::class.java
-        )
-        return http.execute(request, listType)
+        return http.execute(request, http.constructListType(BijlageMetadata::class.java))
     }
 
     fun uploadBijlage(
@@ -114,7 +111,14 @@ class BerichtenClient internal constructor(
         val boundary = "----FbsBoundary${System.nanoTime()}"
         val uri = URI.create("$berichtenUrl/$berichtId/bijlagen")
 
-        val bytes = inhoud.readAllBytes()
+        val bytes = try {
+            inhoud.readAllBytes()
+        } catch (e: IOException) {
+            throw FbsException(
+                "Fout bij lezen van bijlage '$bestandsnaam': ${e.message}",
+                cause = e
+            )
+        }
         val body = buildMultipartBody(boundary, bestandsnaam, mediaType, bytes)
 
         val request = http.requestBuilder(uri, traceparent)

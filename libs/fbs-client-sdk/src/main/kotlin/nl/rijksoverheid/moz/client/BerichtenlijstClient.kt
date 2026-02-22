@@ -25,7 +25,8 @@ class BerichtenlijstClient internal constructor(
     ): Page<BerichtRecord> {
         val uri = URI.create(
             "$berichtenlijstUrl?ontvangerIdType=${ontvangerIdType.name}" +
-                "&ontvangerId=$ontvangerId&page=$page&pageSize=$pageSize"
+                "&ontvangerId=${FbsHttpSupport.urlEncode(ontvangerId)}" +
+                "&page=$page&pageSize=$pageSize"
         )
         val request = http.requestBuilder(uri, traceparent)
             .GET()
@@ -44,7 +45,9 @@ class BerichtenlijstClient internal constructor(
     ): Page<BerichtRecord> {
         val uri = URI.create(
             "$berichtenlijstUrl/zoek?ontvangerIdType=${ontvangerIdType.name}" +
-                "&ontvangerId=$ontvangerId&zoekterm=$zoekterm&page=$page&pageSize=$pageSize"
+                "&ontvangerId=${FbsHttpSupport.urlEncode(ontvangerId)}" +
+                "&zoekterm=${FbsHttpSupport.urlEncode(zoekterm)}" +
+                "&page=$page&pageSize=$pageSize"
         )
         val request = http.requestBuilder(uri, traceparent)
             .GET()

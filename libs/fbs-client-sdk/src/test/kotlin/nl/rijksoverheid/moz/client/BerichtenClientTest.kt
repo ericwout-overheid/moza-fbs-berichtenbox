@@ -7,6 +7,8 @@ import io.mockk.verify
 import nl.rijksoverheid.moz.common.model.*
 import org.junit.jupiter.api.assertThrows
 import java.io.ByteArrayInputStream
+import java.io.IOException
+import java.io.InputStream
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
@@ -146,6 +148,19 @@ class BerichtenClientTest {
             "00-trace-span-01",
             requestSlot.captured.headers().firstValue("traceparent").get()
         )
+    }
+
+    @Test
+    fun `uploadBijlage met falende InputStream gooit FbsException`() {
+        val failingStream = object : InputStream() {
+            override fun read(): Int = throw IOException("Disk read error")
+        }
+
+        val exception = assertThrows<FbsException> {
+            client.uploadBijlage(berichtId, "test.pdf", "application/pdf", failingStream)
+        }
+        assertTrue(exception.message!!.contains("test.pdf"))
+        assertTrue(exception.cause is IOException)
     }
 
     @Test
