@@ -9,6 +9,8 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 data class ServiceStatus(
     val naam: String,
@@ -16,8 +18,15 @@ data class ServiceStatus(
     val beschikbaar: Boolean,
     val statusCode: Int? = null,
     val foutmelding: String? = null,
-    val responseTimeMs: Long = 0
-)
+    val responseTimeMs: Long? = null
+) {
+    init {
+        if (beschikbaar) {
+            require(statusCode != null) { "beschikbare service moet statusCode hebben" }
+            require(foutmelding == null) { "beschikbare service mag geen foutmelding hebben" }
+        }
+    }
+}
 
 @ApplicationScoped
 class ServiceHealthChecker(
@@ -30,9 +39,14 @@ class ServiceHealthChecker(
         .connectTimeout(Duration.ofSeconds(3))
         .build()
 
-    fun checkAll(): List<ServiceStatus> = healthUrls.parallelStream()
-        .map { url -> checkService(url) }
-        .toList()
+    private val executor = Executors.newVirtualThreadPerTaskExecutor()
+
+    fun checkAll(): List<ServiceStatus> {
+        val futures = healthUrls.map { url ->
+            executor.submit<ServiceStatus> { checkService(url) }
+        }
+        return futures.map { it.get(10, TimeUnit.SECONDS) }
+    }
 
     private fun checkService(baseUrl: String): ServiceStatus {
         val naam = mapPortToNaam(baseUrl)
@@ -72,6 +86,14 @@ class ServiceHealthChecker(
                 url = baseUrl,
                 beschikbaar = false,
                 foutmelding = "Verzoek onderbroken"
+            )
+        } catch (e: Exception) {
+            log.errorf(e, "Onverwachte fout bij health check voor %s (%s): %s", naam, healthUrl, e.message)
+            ServiceStatus(
+                naam = naam,
+                url = baseUrl,
+                beschikbaar = false,
+                foutmelding = "Onverwachte fout: ${e.message}"
             )
         }
     }

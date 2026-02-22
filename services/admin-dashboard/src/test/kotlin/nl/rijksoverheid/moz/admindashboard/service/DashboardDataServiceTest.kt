@@ -30,6 +30,26 @@ class DashboardDataServiceTest {
         every { fbsClient.profielen() } returns profielClient
     }
 
+    // --- DashboardResult contract tests ---
+
+    @Test
+    fun `DashboardResult ok heeft isFout false en null foutmelding`() {
+        val result = DashboardResult.ok("data")
+        assertFalse(result.isFout)
+        assertNull(result.foutmelding)
+        assertEquals("data", result.data)
+    }
+
+    @Test
+    fun `DashboardResult fout heeft isFout true en behoudt fallback`() {
+        val result = DashboardResult.fout("Foutmelding", "fallback")
+        assertTrue(result.isFout)
+        assertEquals("Foutmelding", result.foutmelding)
+        assertEquals("fallback", result.data)
+    }
+
+    // --- haalBerichten ---
+
     @Test
     fun `haalBerichten retourneert pagina bij succes`() {
         val pagina = Page(
@@ -98,6 +118,19 @@ class DashboardDataServiceTest {
     }
 
     @Test
+    fun `haalBerichten fout fallback behoudt meegegeven pageSize`() {
+        every { berichtenClient.lijstBerichten(page = 1, pageSize = 50, status = null) } throws
+            FbsException("Service niet bereikbaar")
+
+        val result = service.haalBerichten(pageSize = 50)
+
+        assertTrue(result.isFout)
+        assertEquals(50, result.data.paginaGrootte)
+    }
+
+    // --- haalBericht ---
+
+    @Test
     fun `haalBericht retourneert bericht bij succes`() {
         val bericht = testBericht()
         every { berichtenClient.haalBericht(bericht.id) } returns bericht
@@ -118,6 +151,8 @@ class DashboardDataServiceTest {
         assertTrue(result.isFout)
         assertNull(result.data)
     }
+
+    // --- haalNotificatieStatus ---
 
     @Test
     fun `haalNotificatieStatus retourneert status bij succes`() {
@@ -147,6 +182,8 @@ class DashboardDataServiceTest {
         assertNull(result.data)
     }
 
+    // --- haalBereikbaarheid ---
+
     @Test
     fun `haalBereikbaarheid retourneert bereikbaarheid bij succes`() {
         val bereikbaarheid = Bereikbaarheid(
@@ -173,6 +210,8 @@ class DashboardDataServiceTest {
         assertTrue(result.isFout)
         assertNull(result.data)
     }
+
+    // --- haalProfiel ---
 
     @Test
     fun `haalProfiel retourneert profiel bij succes`() {
@@ -201,6 +240,8 @@ class DashboardDataServiceTest {
         assertTrue(result.isFout)
         assertNull(result.data)
     }
+
+    // --- Exception propagation ---
 
     @Test
     fun `haalBerichten laat niet-FbsException doorbubbelen`() {
