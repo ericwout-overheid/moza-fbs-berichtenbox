@@ -6,7 +6,6 @@ import org.testcontainers.utility.DockerImageName
 
 class BereikbaarheidTestResource : QuarkusTestResourceLifecycleManager {
 
-    @Suppress("DEPRECATION")
     private val postgres = PostgreSQLContainer(DockerImageName.parse("postgres:16"))
         .withDatabaseName("fbs_test")
         .withUsername("test")
