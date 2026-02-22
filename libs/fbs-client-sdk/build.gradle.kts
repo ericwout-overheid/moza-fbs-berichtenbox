@@ -6,6 +6,7 @@ plugins {
 dependencies {
     api(project(":libs:fbs-common"))
     api(libs.jackson.module.kotlin)
+    implementation(libs.jackson.datatype.jsr310)
 
     testImplementation(libs.mockk)
     testImplementation(kotlin("test"))
