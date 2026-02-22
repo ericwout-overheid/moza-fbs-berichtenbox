@@ -9,17 +9,19 @@ import nl.rijksoverheid.moz.common.FbsConstants
 import nl.rijksoverheid.moz.common.model.ProblemDetail
 import java.io.IOException
 import java.net.URI
+import java.net.URLEncoder
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.nio.charset.StandardCharsets
 import java.time.Duration
 
 /**
  * Gedeelde HTTP-infrastructuur voor alle FBS sub-clients.
  */
 internal class FbsHttpSupport(
-    val httpClient: HttpClient,
-    val objectMapper: ObjectMapper,
+    private val httpClient: HttpClient,
+    private val objectMapper: ObjectMapper,
     private val bearerToken: String?,
     private val requestTimeout: Duration
 ) {
@@ -30,6 +32,7 @@ internal class FbsHttpSupport(
         val builder = HttpRequest.newBuilder()
             .uri(uri)
             .header("Accept", "application/json")
+            .header("API-Version", "1.0.0")
             .timeout(requestTimeout)
 
         bearerToken?.let { builder.header("Authorization", "Bearer $it") }
@@ -42,7 +45,14 @@ internal class FbsHttpSupport(
      * Maakt een JSON BodyPublisher van een object.
      */
     fun jsonBody(body: Any): HttpRequest.BodyPublisher {
-        val json = objectMapper.writeValueAsString(body)
+        val json = try {
+            objectMapper.writeValueAsString(body)
+        } catch (e: JsonProcessingException) {
+            throw FbsException(
+                "Fout bij serialiseren van request body (${body::class.simpleName}): ${e.message}",
+                cause = e
+            )
+        }
         return HttpRequest.BodyPublishers.ofString(json)
     }
 
@@ -93,6 +103,16 @@ internal class FbsHttpSupport(
         )
     }
 
+    /**
+     * Construeert een JavaType voor List<T>.
+     */
+    fun constructListType(elementType: Class<*>): JavaType {
+        return objectMapper.typeFactory.constructCollectionType(
+            List::class.java,
+            elementType
+        )
+    }
+
     private fun send(request: HttpRequest): HttpResponse<String> {
         return try {
             httpClient.send(request, HttpResponse.BodyHandlers.ofString())
@@ -108,14 +128,22 @@ internal class FbsHttpSupport(
         if (response.statusCode() in expectedStatus) return
 
         val problemDetail = parseProblemDetail(response)
-        val message = problemDetail?.detail
-            ?: "FBS service retourneerde statuscode ${response.statusCode()}"
+        val message = problemDetail?.detail ?: buildFallbackMessage(response)
 
         throw FbsException(
             message = message,
             statusCode = response.statusCode(),
             problemDetail = problemDetail
         )
+    }
+
+    private fun buildFallbackMessage(response: HttpResponse<String>): String {
+        val body = response.body()?.take(500)
+        return if (!body.isNullOrBlank()) {
+            "FBS service retourneerde statuscode ${response.statusCode()}. Response: $body"
+        } else {
+            "FBS service retourneerde statuscode ${response.statusCode()}"
+        }
     }
 
     private fun parseProblemDetail(response: HttpResponse<String>): ProblemDetail? {
@@ -162,5 +190,8 @@ internal class FbsHttpSupport(
 
             return FbsHttpSupport(client, mapper, bearerToken, requestTimeout)
         }
+
+        fun urlEncode(value: String): String =
+            URLEncoder.encode(value, StandardCharsets.UTF_8)
     }
 }

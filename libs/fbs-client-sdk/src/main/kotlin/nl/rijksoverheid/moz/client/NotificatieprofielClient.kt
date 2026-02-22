@@ -21,7 +21,7 @@ class NotificatieprofielClient internal constructor(
         traceparent: String? = null
     ): Profiel {
         val uri = URI.create(
-            "$profielenUrl/$ontvangerId?ontvangerIdType=${ontvangerIdType.name}"
+            "$profielenUrl/${FbsHttpSupport.urlEncode(ontvangerId)}?ontvangerIdType=${ontvangerIdType.name}"
         )
         val request = http.requestBuilder(uri, traceparent)
             .GET()
@@ -37,7 +37,7 @@ class NotificatieprofielClient internal constructor(
         traceparent: String? = null
     ): Profiel {
         val uri = URI.create(
-            "$profielenUrl/$ontvangerId?ontvangerIdType=${ontvangerIdType.name}"
+            "$profielenUrl/${FbsHttpSupport.urlEncode(ontvangerId)}?ontvangerIdType=${ontvangerIdType.name}"
         )
         val request = http.requestBuilder(uri, traceparent)
             .header("Content-Type", "application/json")

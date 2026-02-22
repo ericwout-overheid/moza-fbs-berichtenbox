@@ -45,6 +45,24 @@ class FbsHttpSupportTest {
     }
 
     @Test
+    fun `API-Version header wordt gezet`() {
+        mockResponse(200, """{}""")
+
+        val requestSlot = slot<HttpRequest>()
+        val request = support.requestBuilder(URI.create("http://localhost/test"))
+            .GET()
+            .build()
+
+        support.execute(request, Map::class.java)
+
+        verify { httpClient.send(capture(requestSlot), any<HttpResponse.BodyHandler<String>>()) }
+        assertEquals(
+            "1.0.0",
+            requestSlot.captured.headers().firstValue("API-Version").get()
+        )
+    }
+
+    @Test
     fun `traceparent header wordt meegezonden`() {
         mockResponse(200, """{}""")
 
@@ -99,6 +117,21 @@ class FbsHttpSupportTest {
     }
 
     @Test
+    fun `fout statuscode bevat response body in bericht`() {
+        mockResponse(502, "Bad Gateway: upstream unavailable")
+
+        val request = support.requestBuilder(URI.create("http://localhost/test"))
+            .GET()
+            .build()
+
+        val exception = assertThrows<FbsException> {
+            support.execute(request, Map::class.java)
+        }
+        assertEquals(502, exception.statusCode)
+        assertTrue(exception.message!!.contains("Bad Gateway: upstream unavailable"))
+    }
+
+    @Test
     fun `problem+json response wordt geparsed in exception`() {
         mockResponse(
             400,
@@ -136,6 +169,25 @@ class FbsHttpSupportTest {
     }
 
     @Test
+    fun `InterruptedException herstelt interrupt flag en gooit FbsException`() {
+        every {
+            httpClient.send(any<HttpRequest>(), any<HttpResponse.BodyHandler<String>>())
+        } throws InterruptedException("interrupted")
+
+        val request = support.requestBuilder(URI.create("http://localhost/test"))
+            .GET()
+            .build()
+
+        val exception = assertThrows<FbsException> {
+            support.execute(request, Map::class.java)
+        }
+        assertNull(exception.statusCode)
+        assertTrue(Thread.currentThread().isInterrupted)
+        // Reset interrupt flag voor overige tests
+        Thread.interrupted()
+    }
+
+    @Test
     fun `ongeldige JSON response gooit FbsException`() {
         mockResponse(200, "dit is geen json")
 
@@ -159,6 +211,30 @@ class FbsHttpSupportTest {
             .build()
 
         support.executeNoContent(request)
+    }
+
+    @Test
+    fun `executeNoContent gooit FbsException bij onverwachte status`() {
+        mockResponse(200, """{"result":"ok"}""")
+
+        val request = support.requestBuilder(URI.create("http://localhost/test"))
+            .DELETE()
+            .build()
+
+        val exception = assertThrows<FbsException> {
+            support.executeNoContent(request)
+        }
+        assertEquals(200, exception.statusCode)
+    }
+
+    @Test
+    fun `jsonBody gooit FbsException bij serialisatiefout`() {
+        // Een object dat niet te serialiseren is
+        val exception = assertThrows<FbsException> {
+            support.jsonBody(object { val self: Any = this })
+        }
+        assertNull(exception.statusCode)
+        assertTrue(exception.message!!.contains("serialiseren"))
     }
 
     @Suppress("UNCHECKED_CAST")

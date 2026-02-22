@@ -3,6 +3,7 @@ package nl.rijksoverheid.moz.client
 import org.junit.jupiter.api.assertThrows
 import java.net.http.HttpClient
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 class FbsClientTest {
@@ -29,14 +30,12 @@ class FbsClientTest {
 
     @Test
     fun `builder leidt service URLs af van berichtenmagazijn port`() {
-        // Verifieer dat deriveUrl correct poorten substitueert
         val derived = FbsClient.Builder.deriveUrl("http://localhost:8080", 8081)
-        assert(derived == "http://localhost:8081")
+        assertEquals("http://localhost:8081", derived)
     }
 
     @Test
     fun `builder respecteert individueel geconfigureerde URLs`() {
-        // Moet niet crashen - individuele URLs worden doorgestuurd
         val client = FbsClient.builder()
             .berichtenmagazijnUrl("http://magazijn:8080")
             .berichtenlijstUrl("http://lijst:9081")
@@ -51,13 +50,13 @@ class FbsClientTest {
     @Test
     fun `deriveUrl verwerkt URL zonder expliciete port`() {
         val derived = FbsClient.Builder.deriveUrl("http://example.com", 8081)
-        assert(derived == "http://example.com:8081")
+        assertEquals("http://example.com:8081", derived)
     }
 
     @Test
     fun `deriveUrl verwerkt HTTPS URL`() {
         val derived = FbsClient.Builder.deriveUrl("https://example.com", 8081)
-        assert(derived == "https://example.com:8081")
+        assertEquals("https://example.com:8081", derived)
     }
 
     @Test
