@@ -160,6 +160,24 @@ class BereikbaarheidServiceTest {
     }
 
     @Test
+    fun `registreerBereikbaarheid faalt wanneer LDV logging faalt`() {
+        every { ldvLogger.withinVerwerking(any(), any<() -> Any>()) } throws RuntimeException("LDV onbereikbaar")
+
+        val bereikbaarheid = Bereikbaarheid(
+            ontvangerId = "999999999",
+            ontvangerIdType = OntvangerIdType.BSN,
+            digitaalBereikbaar = true,
+            registratieDatum = Instant.now()
+        )
+
+        assertThrows<RuntimeException> {
+            service.registreerBereikbaarheid("999999999", OntvangerIdType.BSN, bereikbaarheid)
+        }
+
+        verify(exactly = 0) { bereikbaarheidRepository.bewaar(any()) }
+    }
+
+    @Test
     fun `haalBereikbaarheid slaagt ook bij LDV logging fout`() {
         val entity = createTestEntity()
         every { bereikbaarheidRepository.vindOpOntvanger("999999999", OntvangerIdType.BSN) } returns entity

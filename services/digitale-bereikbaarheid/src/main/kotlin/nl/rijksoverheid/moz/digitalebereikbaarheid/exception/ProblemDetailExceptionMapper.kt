@@ -21,7 +21,7 @@ class ProblemDetailExceptionMapper : ExceptionMapper<Exception> {
                 Response.Status.NOT_FOUND to ProblemDetail(
                     title = "Niet gevonden",
                     status = Response.Status.NOT_FOUND.statusCode,
-                    detail = exception.message
+                    detail = "Geen bereikbaarheidsstatus gevonden voor de opgegeven ontvanger"
                 )
             }
 

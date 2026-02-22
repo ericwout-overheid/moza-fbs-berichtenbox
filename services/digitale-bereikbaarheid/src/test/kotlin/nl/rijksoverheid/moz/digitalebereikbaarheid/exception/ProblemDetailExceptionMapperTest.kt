@@ -9,6 +9,7 @@ import nl.rijksoverheid.moz.common.FbsConstants
 import nl.rijksoverheid.moz.common.model.OntvangerIdType
 import nl.rijksoverheid.moz.common.model.ProblemDetail
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 
 class ProblemDetailExceptionMapperTest {
@@ -25,6 +26,7 @@ class ProblemDetailExceptionMapperTest {
         assertEquals(404, response.status)
         assertEquals(FbsConstants.MEDIA_TYPE_PROBLEM_JSON, response.mediaType.toString())
         assertEquals("Niet gevonden", problem.title)
+        assertFalse(problem.detail?.contains("999999999") == true, "BSN mag niet in API response lekken")
     }
 
     @Test
