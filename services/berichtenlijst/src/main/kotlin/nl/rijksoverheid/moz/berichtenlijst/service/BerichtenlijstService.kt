@@ -18,9 +18,9 @@ import java.net.URI
 
 @ApplicationScoped
 class BerichtenlijstService(
-    @RestClient private val berichtenmagazijnClient: BerichtenmagazijnClient,
+    @param:RestClient private val berichtenmagazijnClient: BerichtenmagazijnClient,
     private val ldvLogger: LdvLogger,
-    @ConfigProperty(name = "quarkus.rest-client.berichtenmagazijn-api.url", defaultValue = "http://localhost:8080")
+    @param:ConfigProperty(name = "quarkus.rest-client.berichtenmagazijn-api.url", defaultValue = "http://localhost:8080")
     private val magazijnBaseUrl: String
 ) {
 
