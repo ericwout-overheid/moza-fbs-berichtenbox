@@ -146,6 +146,20 @@ class BereikbaarheidServiceTest {
     }
 
     @Test
+    fun `registreerBereikbaarheid wijst niet-overeenkomend ontvangerIdType af`() {
+        val bereikbaarheid = Bereikbaarheid(
+            ontvangerId = "999999999",
+            ontvangerIdType = OntvangerIdType.KVK,
+            digitaalBereikbaar = true,
+            registratieDatum = Instant.now()
+        )
+
+        assertThrows<IllegalArgumentException> {
+            service.registreerBereikbaarheid("999999999", OntvangerIdType.BSN, bereikbaarheid)
+        }
+    }
+
+    @Test
     fun `haalBereikbaarheid slaagt ook bij LDV logging fout`() {
         val entity = createTestEntity()
         every { bereikbaarheidRepository.vindOpOntvanger("999999999", OntvangerIdType.BSN) } returns entity

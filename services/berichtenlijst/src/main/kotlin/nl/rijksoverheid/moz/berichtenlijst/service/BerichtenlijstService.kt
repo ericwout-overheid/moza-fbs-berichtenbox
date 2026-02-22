@@ -45,6 +45,7 @@ class BerichtenlijstService(
                 )
             )
         } catch (e: Exception) {
+            // Breed catch-blok is intentioneel: LDV-logging is best-effort en mag de primaire functionaliteit niet blokkeren
             log.errorf(e, "LDV logging mislukt voor haalBerichtenlijst: ontvangerId=%s", ontvangerId)
         }
 
@@ -73,7 +74,7 @@ class BerichtenlijstService(
         page: Int,
         pageSize: Int
     ): Page<BerichtRecord> {
-        require(zoekterm.length >= 3) { "Zoekterm moet minimaal 3 tekens bevatten" }
+        require(zoekterm.length >= 2) { "Zoekterm moet minimaal 2 tekens bevatten" }
 
         val effectivePage = maxOf(page, 1)
         val effectivePageSize = pageSize.coerceIn(1, FbsConstants.MAX_PAGE_SIZE)
@@ -88,6 +89,7 @@ class BerichtenlijstService(
                 )
             )
         } catch (e: Exception) {
+            // Breed catch-blok is intentioneel: LDV-logging is best-effort en mag de primaire functionaliteit niet blokkeren
             log.errorf(e, "LDV logging mislukt voor zoekBerichten: ontvangerId=%s", ontvangerId)
         }
 
@@ -103,7 +105,7 @@ class BerichtenlijstService(
             resultaten = filtered,
             pagina = berichtenPage.pagina,
             paginaGrootte = berichtenPage.paginaGrootte,
-            totaalPaginas = berichtenPage.totaalPaginas,
+            totaalPaginas = Page.berekenTotaalPaginas(filtered.size.toLong(), berichtenPage.paginaGrootte),
             totaalElementen = filtered.size.toLong()
         )
     }

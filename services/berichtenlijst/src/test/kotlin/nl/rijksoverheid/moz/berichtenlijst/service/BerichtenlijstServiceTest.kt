@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import jakarta.ws.rs.ProcessingException
 import java.time.Instant
 import java.util.UUID
 
@@ -71,10 +72,22 @@ class BerichtenlijstServiceTest {
     }
 
     @Test
-    fun `zoekBerichten met zoekterm korter dan 3 tekens geeft fout`() {
+    fun `zoekBerichten met zoekterm korter dan 2 tekens geeft fout`() {
         assertThrows<IllegalArgumentException> {
-            service.zoekBerichten(OntvangerIdType.BSN, "999999999", "ab", 1, 20)
+            service.zoekBerichten(OntvangerIdType.BSN, "999999999", "a", 1, 20)
         }
+    }
+
+    @Test
+    fun `zoekBerichten met zoekterm van 2 tekens slaagt`() {
+        every {
+            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20)
+        } returns createTestPage()
+
+        val result = service.zoekBerichten(OntvangerIdType.BSN, "999999999", "be", 1, 20)
+
+        assertEquals(1, result.resultaten.size)
+        assertEquals("Belastingaanslag 2025", result.resultaten[0].onderwerp)
     }
 
     @Test
@@ -97,6 +110,30 @@ class BerichtenlijstServiceTest {
         val result = service.haalBerichtenlijst(OntvangerIdType.BSN, "999999999", 0, 20)
 
         assertEquals(2, result.resultaten.size)
+    }
+
+    @Test
+    fun `haalBerichtenlijst propageert ProcessingException van REST client`() {
+        every {
+            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20)
+        } throws ProcessingException("Connection refused")
+
+        assertThrows<ProcessingException> {
+            service.haalBerichtenlijst(OntvangerIdType.BSN, "999999999", 1, 20)
+        }
+    }
+
+    @Test
+    fun `zoekBerichten geeft lege resultaten wanneer filter alles verwijdert`() {
+        every {
+            berichtenmagazijnClient.lijstBerichten(OntvangerIdType.BSN, "999999999", 1, 20)
+        } returns createTestPage()
+
+        val result = service.zoekBerichten(OntvangerIdType.BSN, "999999999", "onbestaand", 1, 20)
+
+        assertEquals(0, result.resultaten.size)
+        assertEquals(0L, result.totaalElementen)
+        assertEquals(0, result.totaalPaginas)
     }
 
     @Test

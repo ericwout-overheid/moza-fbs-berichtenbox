@@ -45,12 +45,25 @@ class BerichtenlijstResourceIntegrationTest {
         given()
             .queryParam("ontvangerIdType", "BSN")
             .queryParam("ontvangerId", "999999999")
-            .queryParam("zoekterm", "ab")
+            .queryParam("zoekterm", "a")
             .`when`()
             .get("/api/v1/berichtenlijst/zoek")
             .then()
             .statusCode(400)
             .header("API-Version", "1.0.0")
             .body("title", equalTo("Ongeldig verzoek"))
+    }
+
+    @Test
+    fun `GET zoek with 2 char zoekterm returns 200`() {
+        given()
+            .queryParam("ontvangerIdType", "BSN")
+            .queryParam("ontvangerId", "999999999")
+            .queryParam("zoekterm", "be")
+            .`when`()
+            .get("/api/v1/berichtenlijst/zoek")
+            .then()
+            .statusCode(200)
+            .header("API-Version", "1.0.0")
     }
 }

@@ -37,6 +37,7 @@ class BereikbaarheidService(
                 )
             )
         } catch (e: Exception) {
+            // Breed catch-blok is intentioneel: LDV-logging is best-effort en mag de primaire functionaliteit niet blokkeren
             log.errorf(e, "LDV logging mislukt voor haalBereikbaarheid: ontvangerId=%s", ontvangerId)
         }
 
@@ -53,6 +54,8 @@ class BereikbaarheidService(
             "ontvangerId en ontvangerIdType in body moeten overeenkomen met pad-parameters"
         }
 
+        // withinVerwerking is bewust: schrijfoperaties moeten auditeerbaar zijn via LDV.
+        // Als LDV-logging faalt, mag de schrijfoperatie niet doorgaan.
         return ldvLogger.withinVerwerking(
             LdvVerwerking(
                 verwerkingsActiviteitId = URI("https://fbs.nl/verwerkingen/bereikbaarheid-registreren"),

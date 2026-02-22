@@ -8,7 +8,7 @@ object BerichtRecordMapper {
     fun toBerichtRecord(bericht: Bericht, magazijnBaseUrl: String): BerichtRecord = BerichtRecord(
         berichtId = bericht.id,
         afzenderOin = bericht.afzenderOin,
-        afzenderNaam = bericht.afzenderOin,
+        afzenderNaam = bericht.afzenderOin, // TODO: resolve OIN naar organisatienaam via organisatieregister
         onderwerp = bericht.onderwerp,
         status = bericht.status,
         aangemaaktOp = bericht.aangemaaktOp,
