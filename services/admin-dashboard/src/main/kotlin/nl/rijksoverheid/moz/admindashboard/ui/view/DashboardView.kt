@@ -3,6 +3,8 @@ package nl.rijksoverheid.moz.admindashboard.ui.view
 import com.vaadin.flow.component.grid.Grid
 import com.vaadin.flow.component.html.H2
 import com.vaadin.flow.component.html.H3
+import com.vaadin.flow.component.notification.Notification
+import com.vaadin.flow.component.notification.NotificationVariant
 import com.vaadin.flow.component.orderedlayout.FlexLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.router.PageTitle
@@ -28,8 +30,15 @@ class DashboardView @Inject constructor(
     }
 
     private fun laadOverzicht() {
-        val berichten = dataService.haalBerichten(page = 1, pageSize = 5)
+        val berichtenResult = dataService.haalBerichten(page = 1, pageSize = 5)
         val services = healthChecker.checkAll()
+
+        if (berichtenResult.isFout) {
+            Notification.show(berichtenResult.foutmelding, 5000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR)
+        }
+
+        val berichten = berichtenResult.data
 
         // Statistieken kaarten
         val statsLayout = FlexLayout()

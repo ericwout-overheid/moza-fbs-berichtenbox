@@ -1,8 +1,12 @@
 package nl.rijksoverheid.moz.admindashboard.service
 
+import com.sun.net.httpserver.HttpServer
+import java.net.InetSocketAddress
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ServiceHealthCheckerTest {
@@ -33,8 +37,64 @@ class ServiceHealthCheckerTest {
     }
 
     @Test
-    fun `mapPortToNaam retourneert Onbekend voor onbekende poort`() {
-        assertEquals("Onbekend (9999)", ServiceHealthChecker.mapPortToNaam("http://localhost:9999"))
+    fun `mapPortToNaam retourneert hostname voor onbekende poort`() {
+        assertEquals("localhost", ServiceHealthChecker.mapPortToNaam("http://localhost:9999"))
+    }
+
+    @Test
+    fun `mapPortToNaam retourneert Onbekend voor ongeldige URL`() {
+        assertEquals("Onbekend", ServiceHealthChecker.mapPortToNaam("ongeldige url met spaties"))
+    }
+
+    @Test
+    fun `mapPortToNaam retourneert hostname voor URL zonder bekende poort`() {
+        assertEquals("example.com", ServiceHealthChecker.mapPortToNaam("http://example.com:9999"))
+    }
+
+    @Test
+    fun `checkAll retourneert beschikbaar true voor bereikbare service`() {
+        val server = HttpServer.create(InetSocketAddress(0), 0)
+        server.createContext("/q/health") { exchange ->
+            exchange.sendResponseHeaders(200, 0)
+            exchange.responseBody.close()
+        }
+        server.start()
+        val port = server.address.port
+
+        try {
+            val checker = ServiceHealthChecker(listOf("http://localhost:$port"))
+            val results = checker.checkAll()
+
+            assertEquals(1, results.size)
+            assertTrue(results[0].beschikbaar)
+            assertEquals(200, results[0].statusCode)
+            assertTrue(results[0].responseTimeMs >= 0)
+            assertNull(results[0].foutmelding)
+        } finally {
+            server.stop(0)
+        }
+    }
+
+    @Test
+    fun `checkAll retourneert beschikbaar false voor 503 response`() {
+        val server = HttpServer.create(InetSocketAddress(0), 0)
+        server.createContext("/q/health") { exchange ->
+            exchange.sendResponseHeaders(503, -1)
+            exchange.responseBody.close()
+        }
+        server.start()
+        val port = server.address.port
+
+        try {
+            val checker = ServiceHealthChecker(listOf("http://localhost:$port"))
+            val results = checker.checkAll()
+
+            assertEquals(1, results.size)
+            assertFalse(results[0].beschikbaar)
+            assertEquals(503, results[0].statusCode)
+        } finally {
+            server.stop(0)
+        }
     }
 
     @Test
@@ -45,6 +105,15 @@ class ServiceHealthCheckerTest {
 
         assertEquals(1, results.size)
         assertFalse(results[0].beschikbaar)
-        assertTrue(results[0].foutmelding != null)
+        assertNotNull(results[0].foutmelding)
+    }
+
+    @Test
+    fun `checkAll met lege URL lijst retourneert lege lijst`() {
+        val checker = ServiceHealthChecker(emptyList())
+
+        val results = checker.checkAll()
+
+        assertTrue(results.isEmpty())
     }
 }
