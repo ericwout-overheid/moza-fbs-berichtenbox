@@ -38,6 +38,7 @@ class StatusBadge(tekst: String, kleur: BadgeKleur) : Span(tekst) {
                 NotificatieStatusWaarde.VERZONDEN -> BadgeKleur.BLAUW
                 NotificatieStatusWaarde.AFGELEVERD -> BadgeKleur.GROEN
                 NotificatieStatusWaarde.MISLUKT -> BadgeKleur.ROOD
+                NotificatieStatusWaarde.DEFINITIEF_MISLUKT -> BadgeKleur.ROOD
             }
         )
 
