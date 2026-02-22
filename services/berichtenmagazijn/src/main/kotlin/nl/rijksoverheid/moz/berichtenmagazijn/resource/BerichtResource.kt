@@ -28,7 +28,7 @@ import java.util.UUID
 class BerichtResource(
     private val berichtService: BerichtService,
     private val eventPublisher: BerichtEventPublisher,
-    @ConfigProperty(name = "fbs.dev.afzender-oin") private val afzenderOin: String
+    @param:ConfigProperty(name = "fbs.dev.afzender-oin") private val afzenderOin: String
 ) {
 
     @POST

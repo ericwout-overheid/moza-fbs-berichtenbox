@@ -7,7 +7,7 @@ import org.jboss.logging.Logger
 
 @ApplicationScoped
 class SmsNotificatieVerzender(
-    @ConfigProperty(name = "fbs.notificatie.sms.stub-modus", defaultValue = "false")
+    @param:ConfigProperty(name = "fbs.notificatie.sms.stub-modus", defaultValue = "false")
     private val stubModus: Boolean
 ) : NotificatieVerzender {
 

@@ -16,7 +16,7 @@ import org.jboss.logging.Logger
 class NotificatieEventPublisher(
     @param:Channel("notificatie-verzonden") private val verzondenEmitter: Emitter<CloudEvent>,
     private val objectMapper: ObjectMapper,
-    @ConfigProperty(name = "fbs.dev.afzender-oin") private val systemOin: String
+    @param:ConfigProperty(name = "fbs.dev.afzender-oin") private val systemOin: String
 ) {
 
     private val log = Logger.getLogger(NotificatieEventPublisher::class.java)
