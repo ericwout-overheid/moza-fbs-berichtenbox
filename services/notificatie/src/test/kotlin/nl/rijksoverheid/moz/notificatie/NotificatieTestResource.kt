@@ -7,7 +7,7 @@ import org.testcontainers.utility.DockerImageName
 
 class NotificatieTestResource : QuarkusTestResourceLifecycleManager {
 
-    private val postgres = PostgreSQLContainer(DockerImageName.parse("postgres:16"))
+    private val postgres = PostgreSQLContainer<Nothing>(DockerImageName.parse("postgres:16"))
         .withDatabaseName("fbs_test")
         .withUsername("test")
         .withPassword("test")
