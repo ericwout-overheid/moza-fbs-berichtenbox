@@ -3,6 +3,7 @@ package nl.rijksoverheid.moz.admindashboard.ui.view
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.html.H2
 import com.vaadin.flow.component.html.Span
+import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.textfield.TextField
@@ -25,7 +26,7 @@ class NotificatiesView @Inject constructor(
         add(H2("Notificatie Status Opzoeken"))
 
         val zoekLayout = HorizontalLayout()
-        zoekLayout.defaultVerticalComponentAlignment = com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.END
+        zoekLayout.defaultVerticalComponentAlignment = FlexComponent.Alignment.END
 
         val idVeld = TextField("Notificatie ID (UUID)")
         idVeld.placeholder = "bijv. 550e8400-e29b-41d4-a716-446655440000"
@@ -51,9 +52,17 @@ class NotificatiesView @Inject constructor(
             return
         }
 
-        val status = dataService.haalNotificatieStatus(id)
+        val result = dataService.haalNotificatieStatus(id)
+        if (result.isFout) {
+            val foutSpan = Span(result.foutmelding)
+            foutSpan.style.set("color", "var(--lumo-error-text-color)")
+            resultaatLayout.add(foutSpan)
+            return
+        }
+
+        val status = result.data
         if (status == null) {
-            resultaatLayout.add(Span("Notificatie niet gevonden of service niet bereikbaar"))
+            resultaatLayout.add(Span("Notificatie niet gevonden"))
             return
         }
 

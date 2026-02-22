@@ -8,6 +8,8 @@ import java.time.Instant
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -37,23 +39,62 @@ class DashboardDataServiceTest {
             totaalPaginas = 1,
             totaalElementen = 1
         )
-        every { berichtenClient.lijstBerichten(page = 1, pageSize = 20) } returns pagina
+        every { berichtenClient.lijstBerichten(page = 1, pageSize = 20, status = null) } returns pagina
 
         val result = service.haalBerichten()
 
-        assertEquals(1, result.resultaten.size)
-        assertEquals(1L, result.totaalElementen)
+        assertFalse(result.isFout)
+        assertEquals(1, result.data.resultaten.size)
+        assertEquals(1L, result.data.totaalElementen)
     }
 
     @Test
-    fun `haalBerichten retourneert lege pagina bij FbsException`() {
-        every { berichtenClient.lijstBerichten(page = 1, pageSize = 20) } throws
+    fun `haalBerichten geeft page en pageSize door aan client`() {
+        val pagina = Page(
+            resultaten = emptyList<Bericht>(),
+            pagina = 3,
+            paginaGrootte = 10,
+            totaalPaginas = 5,
+            totaalElementen = 42
+        )
+        every { berichtenClient.lijstBerichten(page = 3, pageSize = 10, status = null) } returns pagina
+
+        val result = service.haalBerichten(page = 3, pageSize = 10)
+
+        assertFalse(result.isFout)
+        assertEquals(3, result.data.pagina)
+        assertEquals(10, result.data.paginaGrootte)
+        assertEquals(42L, result.data.totaalElementen)
+    }
+
+    @Test
+    fun `haalBerichten geeft status filter door aan client`() {
+        val pagina = Page(
+            resultaten = listOf(testBericht()),
+            pagina = 1,
+            paginaGrootte = 20,
+            totaalPaginas = 1,
+            totaalElementen = 1
+        )
+        every { berichtenClient.lijstBerichten(page = 1, pageSize = 20, status = BerichtStatus.NIEUW) } returns pagina
+
+        val result = service.haalBerichten(status = BerichtStatus.NIEUW)
+
+        assertFalse(result.isFout)
+        assertEquals(1, result.data.resultaten.size)
+    }
+
+    @Test
+    fun `haalBerichten retourneert fout met lege pagina bij FbsException`() {
+        every { berichtenClient.lijstBerichten(page = 1, pageSize = 20, status = null) } throws
             FbsException("Service niet bereikbaar")
 
         val result = service.haalBerichten()
 
-        assertTrue(result.resultaten.isEmpty())
-        assertEquals(0L, result.totaalElementen)
+        assertTrue(result.isFout)
+        assertNotNull(result.foutmelding)
+        assertTrue(result.data.resultaten.isEmpty())
+        assertEquals(0L, result.data.totaalElementen)
     }
 
     @Test
@@ -63,17 +104,19 @@ class DashboardDataServiceTest {
 
         val result = service.haalBericht(bericht.id)
 
-        assertEquals(bericht.id, result?.id)
+        assertFalse(result.isFout)
+        assertEquals(bericht.id, result.data?.id)
     }
 
     @Test
-    fun `haalBericht retourneert null bij FbsException`() {
+    fun `haalBericht retourneert fout bij FbsException`() {
         val id = UUID.randomUUID()
         every { berichtenClient.haalBericht(id) } throws FbsException("Niet gevonden", statusCode = 404)
 
         val result = service.haalBericht(id)
 
-        assertNull(result)
+        assertTrue(result.isFout)
+        assertNull(result.data)
     }
 
     @Test
@@ -88,38 +131,85 @@ class DashboardDataServiceTest {
 
         val result = service.haalNotificatieStatus(id)
 
-        assertEquals(NotificatieStatusWaarde.VERZONDEN, result?.status)
+        assertFalse(result.isFout)
+        assertEquals(NotificatieStatusWaarde.VERZONDEN, result.data?.status)
     }
 
     @Test
-    fun `haalNotificatieStatus retourneert null bij FbsException`() {
+    fun `haalNotificatieStatus retourneert fout bij FbsException`() {
         val id = UUID.randomUUID()
         every { notificatieClient.haalNotificatieStatus(id) } throws
             FbsException("Service niet bereikbaar")
 
         val result = service.haalNotificatieStatus(id)
 
-        assertNull(result)
+        assertTrue(result.isFout)
+        assertNull(result.data)
     }
 
     @Test
-    fun `haalBereikbaarheid retourneert null bij FbsException`() {
+    fun `haalBereikbaarheid retourneert bereikbaarheid bij succes`() {
+        val bereikbaarheid = Bereikbaarheid(
+            ontvangerId = "123456789",
+            ontvangerIdType = OntvangerIdType.BSN,
+            digitaalBereikbaar = true,
+            registratieDatum = Instant.parse("2025-06-01T00:00:00Z")
+        )
+        every { bereikbaarheidClient.haalBereikbaarheid("123456789", OntvangerIdType.BSN) } returns bereikbaarheid
+
+        val result = service.haalBereikbaarheid("123456789", OntvangerIdType.BSN)
+
+        assertFalse(result.isFout)
+        assertEquals(bereikbaarheid, result.data)
+    }
+
+    @Test
+    fun `haalBereikbaarheid retourneert fout bij FbsException`() {
         every { bereikbaarheidClient.haalBereikbaarheid("123456789", OntvangerIdType.BSN) } throws
             FbsException("Niet gevonden", statusCode = 404)
 
         val result = service.haalBereikbaarheid("123456789", OntvangerIdType.BSN)
 
-        assertNull(result)
+        assertTrue(result.isFout)
+        assertNull(result.data)
     }
 
     @Test
-    fun `haalProfiel retourneert null bij FbsException`() {
+    fun `haalProfiel retourneert profiel bij succes`() {
+        val profiel = Profiel(
+            ontvangerId = "123456789",
+            ontvangerIdType = OntvangerIdType.BSN,
+            emailNotificaties = true,
+            smsNotificaties = false,
+            emailAdres = "test@example.com"
+        )
+        every { profielClient.haalProfiel("123456789", OntvangerIdType.BSN) } returns profiel
+
+        val result = service.haalProfiel("123456789", OntvangerIdType.BSN)
+
+        assertFalse(result.isFout)
+        assertEquals(profiel, result.data)
+    }
+
+    @Test
+    fun `haalProfiel retourneert fout bij FbsException`() {
         every { profielClient.haalProfiel("123456789", OntvangerIdType.BSN) } throws
             FbsException("Niet gevonden", statusCode = 404)
 
         val result = service.haalProfiel("123456789", OntvangerIdType.BSN)
 
-        assertNull(result)
+        assertTrue(result.isFout)
+        assertNull(result.data)
+    }
+
+    @Test
+    fun `haalBerichten laat niet-FbsException doorbubbelen`() {
+        every { berichtenClient.lijstBerichten(page = 1, pageSize = 20, status = null) } throws
+            IllegalStateException("Onverwachte fout")
+
+        org.junit.jupiter.api.assertThrows<IllegalStateException> {
+            service.haalBerichten()
+        }
     }
 
     private fun testBericht() = Bericht(

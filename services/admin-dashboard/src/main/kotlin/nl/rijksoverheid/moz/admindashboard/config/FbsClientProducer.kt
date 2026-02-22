@@ -4,9 +4,12 @@ import jakarta.enterprise.context.ApplicationScoped
 import jakarta.enterprise.inject.Produces
 import nl.rijksoverheid.moz.client.FbsClient
 import org.eclipse.microprofile.config.inject.ConfigProperty
+import org.jboss.logging.Logger
 
 @ApplicationScoped
 class FbsClientProducer {
+
+    private val log = Logger.getLogger(FbsClientProducer::class.java)
 
     @ConfigProperty(name = "fbs.berichtenmagazijn.url")
     lateinit var berichtenmagazijnUrl: String
@@ -28,12 +31,18 @@ class FbsClientProducer {
 
     @Produces
     @ApplicationScoped
-    fun fbsClient(): FbsClient = FbsClient.builder()
-        .berichtenmagazijnUrl(berichtenmagazijnUrl)
-        .berichtenlijstUrl(berichtenlijstUrl)
-        .notificatieUrl(notificatieUrl)
-        .notificatieprofielUrl(notificatieprofielUrl)
-        .bereikbaarheidUrl(bereikbaarheidUrl)
-        .bearerToken(bearerToken)
-        .build()
+    fun fbsClient(): FbsClient {
+        log.infof(
+            "FbsClient configuratie: magazijn=%s, lijst=%s, notificatie=%s, profiel=%s, bereikbaarheid=%s",
+            berichtenmagazijnUrl, berichtenlijstUrl, notificatieUrl, notificatieprofielUrl, bereikbaarheidUrl
+        )
+        return FbsClient.builder()
+            .berichtenmagazijnUrl(berichtenmagazijnUrl)
+            .berichtenlijstUrl(berichtenlijstUrl)
+            .notificatieUrl(notificatieUrl)
+            .notificatieprofielUrl(notificatieprofielUrl)
+            .bereikbaarheidUrl(bereikbaarheidUrl)
+            .bearerToken(bearerToken)
+            .build()
+    }
 }

@@ -5,6 +5,9 @@ import com.vaadin.flow.component.combobox.ComboBox
 import com.vaadin.flow.component.grid.Grid
 import com.vaadin.flow.component.html.H2
 import com.vaadin.flow.component.html.Span
+import com.vaadin.flow.component.notification.Notification
+import com.vaadin.flow.component.notification.NotificationVariant
+import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.router.PageTitle
@@ -22,6 +25,7 @@ class BerichtenView @Inject constructor(
 ) : VerticalLayout() {
 
     private var huidigePagina = 1
+    private var totaalPaginas = 0
     private var huidigeStatus: BerichtStatus? = null
     private val pageSize = 20
     private val grid = Grid(Bericht::class.java, false)
@@ -52,7 +56,7 @@ class BerichtenView @Inject constructor(
         add(grid)
 
         val paginatieLayout = HorizontalLayout()
-        paginatieLayout.defaultVerticalComponentAlignment = com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER
+        paginatieLayout.defaultVerticalComponentAlignment = FlexComponent.Alignment.CENTER
         val vorigeKnop = Button("Vorige") {
             if (huidigePagina > 1) {
                 huidigePagina--
@@ -60,8 +64,10 @@ class BerichtenView @Inject constructor(
             }
         }
         val volgendeKnop = Button("Volgende") {
-            huidigePagina++
-            laadBerichten()
+            if (huidigePagina < totaalPaginas) {
+                huidigePagina++
+                laadBerichten()
+            }
         }
         paginatieLayout.add(vorigeKnop, paginaInfo, volgendeKnop)
         add(paginatieLayout)
@@ -70,11 +76,21 @@ class BerichtenView @Inject constructor(
     }
 
     private fun laadBerichten() {
-        val pagina = dataService.haalBerichten(page = huidigePagina, pageSize = pageSize)
+        val result = dataService.haalBerichten(
+            page = huidigePagina, pageSize = pageSize, status = huidigeStatus
+        )
+        if (result.isFout) {
+            Notification.show(result.foutmelding, 5000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR)
+        }
+        val pagina = result.data
+        totaalPaginas = pagina.totaalPaginas
         grid.setItems(pagina.resultaten)
         paginaInfo.text = "Pagina $huidigePagina van ${pagina.totaalPaginas} (${pagina.totaalElementen} berichten)"
     }
 
-    private fun maskeerOntvanger(id: String): String =
-        if (id.length > 4) "${"*".repeat(id.length - 4)}${id.takeLast(4)}" else "****"
+    companion object {
+        fun maskeerOntvanger(id: String): String =
+            if (id.length > 4) "${"*".repeat(id.length - 4)}${id.takeLast(4)}" else "****"
+    }
 }

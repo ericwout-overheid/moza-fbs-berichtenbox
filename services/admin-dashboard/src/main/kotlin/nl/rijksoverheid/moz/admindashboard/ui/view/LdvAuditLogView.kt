@@ -23,9 +23,13 @@ class LdvAuditLogView(
                 "als OpenTelemetry traces. Deze traces zijn te raadplegen via de Jaeger UI."
         ))
 
-        val link = Anchor(jaegerUrl, "Open Jaeger UI")
-        link.setTarget("_blank")
-        add(link)
+        if (jaegerUrl.startsWith("http://") || jaegerUrl.startsWith("https://")) {
+            val link = Anchor(jaegerUrl, "Open Jaeger UI")
+            link.setTarget("_blank")
+            add(link)
+        } else {
+            add(Paragraph("Jaeger UI URL niet geconfigureerd of ongeldig."))
+        }
 
         add(Paragraph("Zoektips:"))
         val tips = listOf(

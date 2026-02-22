@@ -2,6 +2,8 @@ package nl.rijksoverheid.moz.admindashboard.service
 
 import jakarta.enterprise.context.ApplicationScoped
 import org.eclipse.microprofile.config.inject.ConfigProperty
+import org.jboss.logging.Logger
+import java.io.IOException
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -22,11 +24,15 @@ class ServiceHealthChecker(
     @param:ConfigProperty(name = "fbs.health.urls")
     private val healthUrls: List<String>
 ) {
+    private val log = Logger.getLogger(ServiceHealthChecker::class.java)
+
     private val httpClient: HttpClient = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(3))
         .build()
 
-    fun checkAll(): List<ServiceStatus> = healthUrls.map { url -> checkService(url) }
+    fun checkAll(): List<ServiceStatus> = healthUrls.parallelStream()
+        .map { url -> checkService(url) }
+        .toList()
 
     private fun checkService(baseUrl: String): ServiceStatus {
         val naam = mapPortToNaam(baseUrl)
@@ -50,12 +56,22 @@ class ServiceHealthChecker(
                 statusCode = response.statusCode(),
                 responseTimeMs = elapsed
             )
-        } catch (e: Exception) {
+        } catch (e: IOException) {
+            log.warnf("Health check mislukt voor %s (%s): %s", naam, healthUrl, e.message)
             ServiceStatus(
                 naam = naam,
                 url = baseUrl,
                 beschikbaar = false,
-                foutmelding = e.message ?: "Onbekende fout"
+                foutmelding = e.message ?: "Verbindingsfout"
+            )
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            log.warnf("Health check onderbroken voor %s (%s)", naam, healthUrl)
+            ServiceStatus(
+                naam = naam,
+                url = baseUrl,
+                beschikbaar = false,
+                foutmelding = "Verzoek onderbroken"
             )
         }
     }
@@ -70,8 +86,12 @@ class ServiceHealthChecker(
         )
 
         fun mapPortToNaam(url: String): String {
-            val uri = URI.create(url)
-            return PORT_NAAM_MAP[uri.port] ?: "Onbekend (${uri.port})"
+            val uri = try {
+                URI.create(url)
+            } catch (e: IllegalArgumentException) {
+                return "Onbekend"
+            }
+            return PORT_NAAM_MAP[uri.port] ?: uri.host ?: "Onbekend (${uri.port})"
         }
     }
 }
