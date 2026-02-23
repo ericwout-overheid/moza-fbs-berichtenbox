@@ -16,6 +16,10 @@ info:
     url: https://eupl.eu/1.2/nl/
 
 servers:
+  - url: https://berichtenlijst.fbs.moza.nl
+    description: Productieomgeving
+  - url: https://berichtenlijst.acc.fbs.moza.nl
+    description: Acceptatieomgeving
   - url: http://localhost:8081
     description: Lokale ontwikkelomgeving
 

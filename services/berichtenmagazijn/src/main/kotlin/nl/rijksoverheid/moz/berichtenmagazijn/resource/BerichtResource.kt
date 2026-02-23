@@ -14,15 +14,15 @@ import jakarta.ws.rs.QueryParam
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 import jakarta.ws.rs.core.UriInfo
+import nl.rijksoverheid.moz.berichtenmagazijn.config.AfzenderResolver
 import nl.rijksoverheid.moz.berichtenmagazijn.event.BerichtEventPublisher
+import nl.rijksoverheid.moz.berichtenmagazijn.service.AutorisatieService
 import nl.rijksoverheid.moz.berichtenmagazijn.service.BerichtService
 import nl.rijksoverheid.moz.common.model.BerichtAanmaakVerzoek
 import nl.rijksoverheid.moz.common.model.BerichtStatus
 import nl.rijksoverheid.moz.common.model.BerichtStatusWijziging
 import nl.rijksoverheid.moz.common.model.OntvangerIdType
-import org.eclipse.microprofile.config.inject.ConfigProperty
 import jakarta.ws.rs.core.Context
-import java.net.URI
 import java.util.UUID
 
 @Path("/api/v1/berichten")
@@ -31,7 +31,8 @@ import java.util.UUID
 class BerichtResource(
     private val berichtService: BerichtService,
     private val eventPublisher: BerichtEventPublisher,
-    @param:ConfigProperty(name = "fbs.dev.afzender-oin") private val afzenderOin: String
+    private val afzenderResolver: AfzenderResolver,
+    private val autorisatieService: AutorisatieService
 ) {
     @Context
     lateinit var uriInfo: UriInfo
@@ -39,7 +40,7 @@ class BerichtResource(
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     fun maakBericht(verzoek: BerichtAanmaakVerzoek): Response {
-        // SECURITY: In productie moet afzenderOin uit de OIDC/mTLS security context komen.
+        val afzenderOin = afzenderResolver.resolve()
         val bericht = berichtService.maakBericht(afzenderOin, verzoek)
         eventPublisher.publishBerichtOntvangen(afzenderOin, bericht)
         val location = uriInfo.absolutePathBuilder.path(bericht.id.toString()).build()
@@ -73,7 +74,8 @@ class BerichtResource(
         @PathParam("berichtId") berichtId: UUID,
         wijziging: BerichtStatusWijziging
     ): Response {
-        // SECURITY: autorisatie vereist (FTV/AuthZEN) — nog niet geïmplementeerd.
+        val afzenderOin = afzenderResolver.resolve()
+        autorisatieService.controleerToegang(afzenderOin, "update", berichtId)
         val bericht = berichtService.werkBerichtBij(berichtId, wijziging)
         if (wijziging.status == BerichtStatus.GELEZEN) {
             eventPublisher.publishBerichtGelezen(bericht.afzenderOin, bericht)
@@ -84,10 +86,10 @@ class BerichtResource(
     @DELETE
     @Path("/{berichtId}")
     fun verwijderBericht(@PathParam("berichtId") berichtId: UUID): Response {
-        // SECURITY: autorisatie vereist (FTV/AuthZEN) — nog niet geïmplementeerd.
-        val afzenderOin = berichtService.verwijderBericht(berichtId)
-        eventPublisher.publishBerichtVerwijderd(afzenderOin, berichtId)
+        val afzenderOin = afzenderResolver.resolve()
+        autorisatieService.controleerToegang(afzenderOin, "delete", berichtId)
+        val afzenderOinBericht = berichtService.verwijderBericht(berichtId)
+        eventPublisher.publishBerichtVerwijderd(afzenderOinBericht, berichtId)
         return Response.noContent().build()
     }
-
 }

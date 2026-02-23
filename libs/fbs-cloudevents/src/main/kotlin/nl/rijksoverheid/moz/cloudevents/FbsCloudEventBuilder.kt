@@ -32,6 +32,7 @@ object FbsCloudEventBuilder {
         source: URI,
         type: String,
         subject: String? = null,
+        dataschema: URI? = null,
         data: ByteArray? = null
     ): CloudEvent {
         val builder = CloudEventBuilder.v1()
@@ -42,6 +43,7 @@ object FbsCloudEventBuilder {
             .withDataContentType(DATA_CONTENT_TYPE)
 
         subject?.let { builder.withSubject(it) }
+        dataschema?.let { builder.withDataSchema(it) }
         data?.let { builder.withData(DATA_CONTENT_TYPE, it) }
 
         return builder.build()
