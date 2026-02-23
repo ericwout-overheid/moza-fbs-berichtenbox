@@ -49,6 +49,9 @@ vite.generated.ts
 *.p12
 *.jks
 
+# Structurizr (gegenereerd door Structurizr Lite)
+docs/architecture/workspace.json
+
 # Docker
 docker-compose.override.yml
 
