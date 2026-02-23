@@ -3,7 +3,7 @@ package nl.rijksoverheid.moz.authzen.model
 /**
  * Resource in een AuthZEN authorization request.
  *
- * @property type type van de resource (bijv. "bericht", "notificatie")
+ * @property type type van de resource (bijv. "bericht")
  * @property id identifier van de resource
  * @property properties aanvullende eigenschappen
  */

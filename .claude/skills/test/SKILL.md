@@ -40,9 +40,6 @@ Run Gradle tests for FBS modules.
 |-----------|-------------|
 | berichtenmagazijn | `:services:berichtenmagazijn` |
 | berichtenlijst | `:services:berichtenlijst` |
-| notificatie | `:services:notificatie` |
-| notificatieprofiel | `:services:notificatieprofiel` |
-| digitale-bereikbaarheid | `:services:digitale-bereikbaarheid` |
 | admin-dashboard | `:services:admin-dashboard` |
 | fbs-common, common | `:libs:fbs-common` |
 | fbs-client-sdk, client-sdk | `:libs:fbs-client-sdk` |

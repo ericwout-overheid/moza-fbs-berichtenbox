@@ -33,7 +33,7 @@ description:
       - NLGov API Design Rules compliant
       - FSC (Federated Service Connectivity) via OpenFSC
       - LDV (Logboek Dataverwerkingen) audit logging
-      - CloudEvents NL GOV profiel voor notificaties
+      - CloudEvents NL GOV profiel voor berichtevents
       - Haven/Kubernetes deployment ready
 
 legal:

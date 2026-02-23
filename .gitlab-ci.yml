@@ -126,21 +126,6 @@ lint:openapi:
 #   variables:
 #     SERVICE_NAME: berichtenlijst
 
-# docker:notificatie:
-#   extends: .docker-build
-#   variables:
-#     SERVICE_NAME: notificatie
-
-# docker:notificatieprofiel:
-#   extends: .docker-build
-#   variables:
-#     SERVICE_NAME: notificatieprofiel
-
-# docker:digitale-bereikbaarheid:
-#   extends: .docker-build
-#   variables:
-#     SERVICE_NAME: digitale-bereikbaarheid
-
 # docker:admin-dashboard:
 #   extends: .docker-build
 #   variables:
