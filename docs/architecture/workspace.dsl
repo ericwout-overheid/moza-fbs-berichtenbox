@@ -1,4 +1,5 @@
 workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federatief Berichtenstelsel (FBS) - BBO-opdracht Logius/BZK" {
+    !docs workspace-docs
 
     model {
         // Personen
