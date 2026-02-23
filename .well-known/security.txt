@@ -1,0 +1,7 @@
+# Security policy for Federatief Berichtenstelsel (FBS)
+# Conform RFC 9116 - https://www.rfc-editor.org/rfc/rfc9116
+
+Contact: https://github.com/ericwout-overheid/moza-fbs-berichtenbox/security/advisories
+Expires: 2027-02-23T00:00:00.000Z
+Preferred-Languages: nl, en
+Policy: https://github.com/ericwout-overheid/moza-fbs-berichtenbox/security/policy

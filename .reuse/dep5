@@ -1,0 +1,7 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Federatief Berichtenstelsel
+Upstream-Contact: https://github.com/ericwout-overheid/moza-fbs-berichtenbox/issues
+
+Files: *
+Copyright: 2024-2026 Moza
+License: EUPL-1.2

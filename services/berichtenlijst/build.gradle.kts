@@ -12,6 +12,8 @@ dependencies {
     implementation(libs.quarkus.rest.jackson)
     implementation(libs.quarkus.rest.client.jackson)
     implementation(libs.quarkus.smallrye.openapi)
+    implementation(libs.quarkus.smallrye.health)
+    implementation(libs.quarkus.micrometer.registry.prometheus)
     implementation(libs.quarkus.cache)
     implementation(libs.jackson.module.kotlin)
 

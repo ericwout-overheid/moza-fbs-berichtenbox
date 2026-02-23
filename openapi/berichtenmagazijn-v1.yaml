@@ -9,7 +9,7 @@ info:
   contact:
     name: FBS Team
     url: https://github.com/ericwout-overheid/moza-fbs-berichtenbox/issues
-    email: fbs@example.nl
+    email: fbs@moza.nl
   license:
     name: EUPL-1.2
     url: https://eupl.eu/1.2/nl/
@@ -75,6 +75,11 @@ paths:
           headers:
             API-Version:
               $ref: '#/components/headers/API-Version'
+            Location:
+              description: URI van het aangemaakte bericht
+              schema:
+                type: string
+                format: uri
           content:
             application/json:
               schema:
@@ -289,6 +294,11 @@ paths:
           headers:
             API-Version:
               $ref: '#/components/headers/API-Version'
+            Location:
+              description: URI van de geüploade bijlage
+              schema:
+                type: string
+                format: uri
           content:
             application/json:
               schema:
@@ -406,6 +416,11 @@ components:
 
     Bericht:
       type: object
+      required:
+        - id
+        - onderwerp
+        - status
+        - aangemaaktOp
       properties:
         id:
           type: string
@@ -447,6 +462,10 @@ components:
 
     BijlageMetadata:
       type: object
+      required:
+        - id
+        - bestandsnaam
+        - mediaType
       properties:
         id:
           type: string
@@ -474,6 +493,12 @@ components:
 
     BerichtenPagina:
       type: object
+      required:
+        - results
+        - page
+        - pageSize
+        - totalPages
+        - totalElements
       properties:
         results:
           type: array

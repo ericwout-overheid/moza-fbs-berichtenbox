@@ -4,6 +4,9 @@ name: Federatief Berichtenstelsel - Referentie-Implementatie
 url: "https://github.com/ericwout-overheid/moza-fbs-berichtenbox"
 landingURL: "https://github.com/ericwout-overheid/moza-fbs-berichtenbox"
 
+releaseDate: "2026-02-23"
+softwareVersion: "0.1.0"
+
 softwareType: standalone/backend
 
 platforms:
@@ -14,6 +17,8 @@ categories:
   - it-development
 
 developmentStatus: development
+
+apiDocumentation: "https://github.com/ericwout-overheid/moza-fbs-berichtenbox/tree/main/openapi"
 
 description:
   nl:
@@ -44,7 +49,7 @@ maintenance:
   type: internal
   contacts:
     - name: Projectteam FBS
-      email: info@example.nl
+      email: fbs@moza.nl
 
 localisation:
   localisationReady: false

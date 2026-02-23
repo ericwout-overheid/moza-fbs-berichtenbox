@@ -4,20 +4,6 @@
 
 If you are looking to help to with a code contribution our project uses GitHub to manage reviews of pull requests.
 
-## Private vs public repos
-
-We distinguish between two routes to contribute to code bases of projects, in which we recognize:
-- code completely public and accessible
-- code sourced from private repository here or elsewhere
-
-For projects that only work with public repos, the way of contributing for project team and community is the same and speaks for itself.
-
-![Public repos only](./Img/CONTRIBUTING-public.jpg)
-
-For code sourced from private repository here or elsewhere, we distinguish between PRs of the project team and those of the community.
-
-![Private vs public repos](./Img/CONTRIBUTING-private.jpg)
-
 ## How do I make a contribution?
 
 Never made an open source contribution before? Wondering how contributions work in the in our project? Here's a quick rundown!
@@ -37,11 +23,31 @@ Never made an open source contribution before? Wondering how contributions work 
 13. Make changes to the pull request if the reviewing maintainer recommends them.
 14. Celebrate your success after your pull request is merged!
 
+## Development setup
+
+Prerequisites:
+- JDK 21+ (install via SDKMAN or download to `~/.jdks/`)
+- Docker and Docker Compose
+
+```bash
+# Start local dependencies (PostgreSQL, Kafka, MinIO, Jaeger)
+docker compose -f infrastructure/docker-compose.deps.yml up -d
+
+# Build the project
+./gradlew build
+
+# Run all tests
+./gradlew check
+
+# Run a single service in dev mode
+./gradlew :services:berichtenmagazijn:quarkusDev
+```
+
 ## Where can I go for help?
 
-If you need help on a specific repositiory, you can ask the repository owners.
+If you need help on a specific repository, you can ask the repository owners.
 If you need help on MinBZK repositories in general, you can e-mail opensource@minbzk.nl.
 
 ## What does the Code of Conduct mean for me?
 
-Our ![Code of Conduct](./CODE_OF_CONDUCT.md) means that you are responsible for treating everyone on the project with respect and courtesy regardless of their identity. If you are the victim of any inappropriate behavior or comments as described in our Code of Conduct, we are here for you and will do the best to ensure that the abuser is reprimanded appropriately, per our code.
+Our [Code of Conduct](./CODE_OF_CONDUCT.md) means that you are responsible for treating everyone on the project with respect and courtesy regardless of their identity. If you are the victim of any inappropriate behavior or comments as described in our Code of Conduct, we are here for you and will do the best to ensure that the abuser is reprimanded appropriately, per our code.
