@@ -4,4 +4,5 @@
 Contact: https://github.com/ericwout-overheid/moza-fbs-berichtenbox/security/advisories
 Expires: 2027-02-23T00:00:00Z
 Preferred-Languages: nl, en
+Canonical: https://github.com/ericwout-overheid/moza-fbs-berichtenbox/blob/main/.well-known/security.txt
 Policy: https://github.com/ericwout-overheid/moza-fbs-berichtenbox/security/policy

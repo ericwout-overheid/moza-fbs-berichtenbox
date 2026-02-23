@@ -15,6 +15,10 @@ info:
     url: https://eupl.eu/1.2/nl/
 
 servers:
+  - url: https://berichtenmagazijn.fbs.moza.nl
+    description: Productieomgeving
+  - url: https://berichtenmagazijn.acc.fbs.moza.nl
+    description: Acceptatieomgeving
   - url: http://localhost:8080
     description: Lokale ontwikkelomgeving
 

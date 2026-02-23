@@ -10,6 +10,7 @@ import nl.rijksoverheid.moz.common.model.Bericht
 import org.eclipse.microprofile.reactive.messaging.Channel
 import org.eclipse.microprofile.reactive.messaging.Emitter
 import org.jboss.logging.Logger
+import java.net.URI
 
 @ApplicationScoped
 class BerichtEventPublisher(
@@ -74,7 +75,12 @@ class BerichtEventPublisher(
             source = source,
             type = type,
             subject = bericht.id.toString(),
+            dataschema = BERICHT_SCHEMA,
             data = data
         )
+    }
+
+    companion object {
+        private val BERICHT_SCHEMA = URI.create("https://berichtenmagazijn.fbs.moza.nl/openapi.json#/components/schemas/Bericht")
     }
 }
