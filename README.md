@@ -10,7 +10,7 @@
 > [Logius Standaarden](https://github.com/logius-standaarden).
 > Het is **geen officieel product** van Logius, BZK of enige andere overheidsorganisatie.
 
-Referentie-implementatie van een **eigen berichtenmagazijn** voor het Federatief Berichtenstelsel (FBS), inclusief een FBS Client SDK. Dit project laat zien hoe een overheidsorganisatie een eigen FBS-compliant berichtenmagazijn kan bouwen en berichten kan uitwisselen binnen het stelsel. Het berichtenmagazijn biedt opslag, routering en notificatie van berichten aan burgers en ondernemers, conform de standaarden van Logius/BZK.
+Referentie-implementatie van een **eigen berichtenmagazijn** voor het Federatief Berichtenstelsel (FBS), inclusief een FBS Client SDK. Dit project laat zien hoe een overheidsorganisatie een eigen FBS-compliant berichtenmagazijn kan bouwen en berichten kan uitwisselen binnen het stelsel. Het berichtenmagazijn biedt opslag, routering en ophalen van berichten aan burgers en ondernemers, conform de standaarden van Logius/BZK.
 
 ## Kenmerken
 
@@ -31,9 +31,6 @@ federatief-berichtenstelsel/
   services/
     berichtenmagazijn/        # Eigen berichtenmagazijn (core service)
     berichtenlijst/           # Berichtenlijst Service (aggregatie & routering)
-    notificatie/              # Notificatie Service (CloudEvents, multi-channel)
-    notificatieprofiel/       # Notificatieprofiel Service (voorkeuren ontvangers)
-    digitale-bereikbaarheid/  # Digitale Bereikbaarheid Service
     admin-dashboard/          # Beheer dashboard
   libs/
     fbs-client-sdk/           # FBS Client SDK (Kotlin library)
@@ -50,10 +47,11 @@ federatief-berichtenstelsel/
 |---------|-------------|
 | **Berichtenmagazijn** | Kern berichtenopslag: berichten ontvangen, opslaan, doorzoeken en ophalen |
 | **Berichtenlijst** | Aggregeert berichtrecords met routering naar gedistribueerde opslaglocaties |
-| **Notificatie** | Multi-channel notificaties (e-mail, SMS) via CloudEvents |
-| **Notificatieprofiel** | Centraal beheer van notificatievoorkeuren van ontvangers |
-| **Digitale Bereikbaarheid** | Beheer van toestemming voor digitale communicatie via FBS |
 | **Admin Dashboard** | Beheer- en monitoringinterface |
+
+**Externe services (niet in dit project):**
+- Notificatie Service, Profiel Service — aparte repositories bij MinBZK
+- AuthZEN/FTV — federatieve toegangsverlening
 
 ### Bibliotheken
 

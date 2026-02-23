@@ -11,9 +11,6 @@ Create a Flyway migration file with the correct version number for a service.
 
 1. **Determine service**: Ask which service needs the migration if not specified. Only these services use Flyway:
    - `berichtenmagazijn`
-   - `notificatie`
-   - `notificatieprofiel`
-   - `digitale-bereikbaarheid`
 
 2. **Get description**: Ask for a short description if not provided. Use snake_case (e.g., `create_berichten_table`).
 
