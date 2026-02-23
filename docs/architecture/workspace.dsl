@@ -109,6 +109,11 @@ workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federa
     }
 
     views {
+        properties {
+            "generatr.site.externalTag" "Extern Systeem"
+            "generatr.site.nestGroups" "false"
+        }
+
         systemLandscape "SystemLandscape" "Het Federatief Berichtenstelsel - een stelsel van federatief gekoppelde diensten" {
             include *
             autoLayout
