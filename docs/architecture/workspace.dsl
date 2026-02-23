@@ -77,20 +77,23 @@ workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federa
         beheerder -> adminDashboard "Beheert systeem via" "HTTPS (browser)"
 
         // Organisaties -> FBS diensten
-        orgA -> kafka "Publiceert events (bericht-ontvangen, gelezen, verwijderd)" "FSC / Kafka"
-        orgB -> kafka "Publiceert events (bericht-ontvangen, gelezen, verwijderd)" "FSC / Kafka"
+        orgA -> berichtenlijst "Notificeert over nieuwe/gelezen/verwijderde berichten" "CloudEvents via FSC"
+        orgB -> berichtenlijst "Notificeert over nieuwe/gelezen/verwijderde berichten" "CloudEvents via FSC"
         orgC -> centraalMagazijn "Verstuurt en ontvangt berichten" "REST API via FSC"
 
         // Berichtenlijst aggregeert uit alle magazijnen
         berichtenlijst -> centraalMagazijn "Haalt berichtrecords op" "REST API"
         berichtenlijst -> orgA "Haalt berichtrecords op" "REST API via FSC"
         berichtenlijst -> orgB "Haalt berichtrecords op" "REST API via FSC"
+        berichtenlijst -> kafka "Publiceert interne events" "Kafka Producer"
 
         // Centraal Berichtenmagazijn -> infrastructuur
         centraalMagazijn -> kafka "Publiceert events (bericht-ontvangen, gelezen, verwijderd)" "Kafka Producer"
 
-        // Notificatie Service (extern) consumeert events en bezorgt notificaties
-        notificatieService -> kafka "Consumeert bericht-ontvangen events" "Kafka Consumer"
+        // Berichtenlijst notificeert externe Notificatie Service
+        berichtenlijst -> notificatieService "Stuurt bericht-events door" "CloudEvents webhook"
+
+        // Notificatie Service (extern) bezorgt notificaties
         notificatieService -> profielService "Haalt contactgegevens en voorkeuren op" "REST API"
         notificatieService -> smtpServer "Verstuurt e-mailnotificaties" "SMTP"
         notificatieService -> smsGateway "Verstuurt SMS-notificaties" "HTTPS"
