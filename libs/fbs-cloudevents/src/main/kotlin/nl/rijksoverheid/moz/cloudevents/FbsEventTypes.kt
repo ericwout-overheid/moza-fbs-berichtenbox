@@ -9,5 +9,4 @@ object FbsEventTypes {
     const val BERICHT_ONTVANGEN = "nl.rijksoverheid.moz.bericht.ontvangen"
     const val BERICHT_GELEZEN = "nl.rijksoverheid.moz.bericht.gelezen"
     const val BERICHT_VERWIJDERD = "nl.rijksoverheid.moz.bericht.verwijderd"
-    const val NOTIFICATIE_VERZONDEN = "nl.rijksoverheid.moz.notificatie.verzonden"
 }

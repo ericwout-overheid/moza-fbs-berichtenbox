@@ -14,15 +14,6 @@ class FbsClientProducer(
     @param:ConfigProperty(name = "fbs.berichtenlijst.url")
     private val berichtenlijstUrl: String,
 
-    @param:ConfigProperty(name = "fbs.notificatie.url")
-    private val notificatieUrl: String,
-
-    @param:ConfigProperty(name = "fbs.notificatieprofiel.url")
-    private val notificatieprofielUrl: String,
-
-    @param:ConfigProperty(name = "fbs.bereikbaarheid.url")
-    private val bereikbaarheidUrl: String,
-
     @param:ConfigProperty(name = "fbs.admin.bearer-token")
     private val bearerToken: String
 ) {
@@ -35,16 +26,13 @@ class FbsClientProducer(
             log.errorf("fbs.admin.bearer-token is leeg — stel FBS_ADMIN_BEARER_TOKEN omgevingsvariabele in")
         }
         log.infof(
-            "FbsClient configuratie: magazijn=%s, lijst=%s, notificatie=%s, profiel=%s, bereikbaarheid=%s",
-            berichtenmagazijnUrl, berichtenlijstUrl, notificatieUrl, notificatieprofielUrl, bereikbaarheidUrl
+            "FbsClient configuratie: magazijn=%s, lijst=%s",
+            berichtenmagazijnUrl, berichtenlijstUrl
         )
         return try {
             FbsClient.builder()
                 .berichtenmagazijnUrl(berichtenmagazijnUrl)
                 .berichtenlijstUrl(berichtenlijstUrl)
-                .notificatieUrl(notificatieUrl)
-                .notificatieprofielUrl(notificatieprofielUrl)
-                .bereikbaarheidUrl(bereikbaarheidUrl)
                 .bearerToken(bearerToken.ifBlank { null })
                 .build()
         } catch (e: Exception) {

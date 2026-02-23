@@ -23,15 +23,16 @@ libs/                  # Herbruikbare libraries (geen Quarkus)
 services/              # Quarkus microservices
   berichtenmagazijn/   # Core: berichten opslaan/ophalen (port 8080)
   berichtenlijst/      # Aggregatie berichtrecords (port 8081)
-  notificatie/         # Multi-channel notificaties (port 8082)
-  notificatieprofiel/  # Ontvanger-voorkeuren (port 8083)
-  digitale-bereikbaarheid/  # Toestemmingsbeheer (port 8084)
   admin-dashboard/     # Beheer-UI (port 8085)
 
 openapi/               # OpenAPI 3.1 specs (contract-first)
 infrastructure/        # Docker Compose
 docs/                  # Documentatie en plannen
 ```
+
+**Externe services (niet in dit project):**
+- Notificatie Service, Profiel Service — aparte repositories bij MinBZK
+- AuthZEN/FTV — federatieve toegangsverlening
 
 ## Build Commands
 ```bash

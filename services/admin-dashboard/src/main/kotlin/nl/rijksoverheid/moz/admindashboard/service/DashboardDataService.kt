@@ -44,30 +44,6 @@ class DashboardDataService(
             DashboardResult.fout("Bericht kon niet worden opgehaald: ${e.message}", null)
         }
 
-    fun haalNotificatieStatus(id: UUID): DashboardResult<NotificatieStatus?> =
-        try {
-            DashboardResult.ok(fbsClient.notificaties().haalNotificatieStatus(id))
-        } catch (e: FbsException) {
-            logFbsException(e, "Notificatiestatus ophalen mislukt: notificatieId=%s, statusCode=%s", id, e.statusCode)
-            DashboardResult.fout("Notificatiestatus kon niet worden opgehaald: ${e.message}", null)
-        }
-
-    fun haalBereikbaarheid(ontvangerId: String, type: OntvangerIdType): DashboardResult<Bereikbaarheid?> =
-        try {
-            DashboardResult.ok(fbsClient.bereikbaarheid().haalBereikbaarheid(ontvangerId, type))
-        } catch (e: FbsException) {
-            logFbsException(e, "Bereikbaarheid ophalen mislukt: ontvangerIdType=%s, statusCode=%s", type, e.statusCode)
-            DashboardResult.fout("Bereikbaarheid kon niet worden opgehaald: ${e.message}", null)
-        }
-
-    fun haalProfiel(ontvangerId: String, type: OntvangerIdType): DashboardResult<Profiel?> =
-        try {
-            DashboardResult.ok(fbsClient.profielen().haalProfiel(ontvangerId, type))
-        } catch (e: FbsException) {
-            logFbsException(e, "Profiel ophalen mislukt: ontvangerIdType=%s, statusCode=%s", type, e.statusCode)
-            DashboardResult.fout("Profiel kon niet worden opgehaald: ${e.message}", null)
-        }
-
     private fun logFbsException(e: FbsException, format: String, vararg params: Any?) {
         val statusCode = e.statusCode
         if (statusCode == null || statusCode >= 500) {

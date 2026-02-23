@@ -17,17 +17,11 @@ class DashboardDataServiceTest {
 
     private val fbsClient = mockk<FbsClient>()
     private val berichtenClient = mockk<BerichtenClient>()
-    private val notificatieClient = mockk<NotificatieClient>()
-    private val bereikbaarheidClient = mockk<BereikbaarheidClient>()
-    private val profielClient = mockk<NotificatieprofielClient>()
 
     private val service = DashboardDataService(fbsClient)
 
     init {
         every { fbsClient.berichten() } returns berichtenClient
-        every { fbsClient.notificaties() } returns notificatieClient
-        every { fbsClient.bereikbaarheid() } returns bereikbaarheidClient
-        every { fbsClient.profielen() } returns profielClient
     }
 
     // --- DashboardResult contract tests ---
@@ -147,95 +141,6 @@ class DashboardDataServiceTest {
         every { berichtenClient.haalBericht(id) } throws FbsException("Niet gevonden", statusCode = 404)
 
         val result = service.haalBericht(id)
-
-        assertTrue(result.isFout)
-        assertNull(result.data)
-    }
-
-    // --- haalNotificatieStatus ---
-
-    @Test
-    fun `haalNotificatieStatus retourneert status bij succes`() {
-        val id = UUID.randomUUID()
-        val status = NotificatieStatus(
-            notificatieId = id,
-            status = NotificatieStatusWaarde.VERZONDEN,
-            verzondenOp = Instant.now()
-        )
-        every { notificatieClient.haalNotificatieStatus(id) } returns status
-
-        val result = service.haalNotificatieStatus(id)
-
-        assertFalse(result.isFout)
-        assertEquals(NotificatieStatusWaarde.VERZONDEN, result.data?.status)
-    }
-
-    @Test
-    fun `haalNotificatieStatus retourneert fout bij FbsException`() {
-        val id = UUID.randomUUID()
-        every { notificatieClient.haalNotificatieStatus(id) } throws
-            FbsException("Service niet bereikbaar")
-
-        val result = service.haalNotificatieStatus(id)
-
-        assertTrue(result.isFout)
-        assertNull(result.data)
-    }
-
-    // --- haalBereikbaarheid ---
-
-    @Test
-    fun `haalBereikbaarheid retourneert bereikbaarheid bij succes`() {
-        val bereikbaarheid = Bereikbaarheid(
-            ontvangerId = "123456789",
-            ontvangerIdType = OntvangerIdType.BSN,
-            digitaalBereikbaar = true,
-            registratieDatum = Instant.parse("2025-06-01T00:00:00Z")
-        )
-        every { bereikbaarheidClient.haalBereikbaarheid("123456789", OntvangerIdType.BSN) } returns bereikbaarheid
-
-        val result = service.haalBereikbaarheid("123456789", OntvangerIdType.BSN)
-
-        assertFalse(result.isFout)
-        assertEquals(bereikbaarheid, result.data)
-    }
-
-    @Test
-    fun `haalBereikbaarheid retourneert fout bij FbsException`() {
-        every { bereikbaarheidClient.haalBereikbaarheid("123456789", OntvangerIdType.BSN) } throws
-            FbsException("Niet gevonden", statusCode = 404)
-
-        val result = service.haalBereikbaarheid("123456789", OntvangerIdType.BSN)
-
-        assertTrue(result.isFout)
-        assertNull(result.data)
-    }
-
-    // --- haalProfiel ---
-
-    @Test
-    fun `haalProfiel retourneert profiel bij succes`() {
-        val profiel = Profiel(
-            ontvangerId = "123456789",
-            ontvangerIdType = OntvangerIdType.BSN,
-            emailNotificaties = true,
-            smsNotificaties = false,
-            emailAdres = "test@example.com"
-        )
-        every { profielClient.haalProfiel("123456789", OntvangerIdType.BSN) } returns profiel
-
-        val result = service.haalProfiel("123456789", OntvangerIdType.BSN)
-
-        assertFalse(result.isFout)
-        assertEquals(profiel, result.data)
-    }
-
-    @Test
-    fun `haalProfiel retourneert fout bij FbsException`() {
-        every { profielClient.haalProfiel("123456789", OntvangerIdType.BSN) } throws
-            FbsException("Niet gevonden", statusCode = 404)
-
-        val result = service.haalProfiel("123456789", OntvangerIdType.BSN)
 
         assertTrue(result.isFout)
         assertNull(result.data)

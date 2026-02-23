@@ -24,21 +24,6 @@ class ServiceHealthCheckerTest {
     }
 
     @Test
-    fun `mapPortToNaam retourneert Notificatie voor poort 8082`() {
-        assertEquals("Notificatie", ServiceHealthChecker.mapPortToNaam("http://localhost:8082"))
-    }
-
-    @Test
-    fun `mapPortToNaam retourneert Notificatieprofiel voor poort 8083`() {
-        assertEquals("Notificatieprofiel", ServiceHealthChecker.mapPortToNaam("http://localhost:8083"))
-    }
-
-    @Test
-    fun `mapPortToNaam retourneert Digitale Bereikbaarheid voor poort 8084`() {
-        assertEquals("Digitale Bereikbaarheid", ServiceHealthChecker.mapPortToNaam("http://localhost:8084"))
-    }
-
-    @Test
     fun `mapPortToNaam retourneert hostname voor onbekende poort`() {
         assertEquals("localhost", ServiceHealthChecker.mapPortToNaam("http://localhost:9999"))
     }
