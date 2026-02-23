@@ -8,7 +8,7 @@ import nl.rijksoverheid.moz.ldv.LdvPseudonimiseerder
 import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.jboss.logging.Logger
 
-/** CDI producer for LdvLogger en LdvPseudonimiseerder. Vereist omdat fbs-ldv een plain library is zonder Quarkus auto-configuratie. */
+/** CDI producer voor LdvLogger en LdvPseudonimiseerder. Vereist omdat fbs-ldv een plain library is zonder Quarkus auto-configuratie. */
 @ApplicationScoped
 class LdvProducer(
     @param:ConfigProperty(name = "otel.exporter.otlp.endpoint")
@@ -30,6 +30,13 @@ class LdvProducer(
     @Produces
     @ApplicationScoped
     fun ldvPseudonimiseerder(): LdvPseudonimiseerder {
+        require(pseudonimiseringZout.isNotBlank()) {
+            "Configuratiefout: fbs.ldv.pseudonimisering.zout mag niet leeg zijn"
+        }
+        require(pseudonimiseringZout.toByteArray(Charsets.UTF_8).size >= 32) {
+            "Configuratiefout: fbs.ldv.pseudonimisering.zout moet minimaal 32 bytes zijn " +
+                "(huidige lengte: ${pseudonimiseringZout.toByteArray(Charsets.UTF_8).size})"
+        }
         log.info("LDV BSN-pseudonimisering geconfigureerd (HMAC-SHA256)")
         return LdvPseudonimiseerder.create(pseudonimiseringZout)
     }

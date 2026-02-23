@@ -11,6 +11,8 @@ import jakarta.ws.rs.core.Context
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 import jakarta.ws.rs.core.UriInfo
+import nl.rijksoverheid.moz.berichtenmagazijn.config.AfzenderResolver
+import nl.rijksoverheid.moz.berichtenmagazijn.service.AutorisatieService
 import nl.rijksoverheid.moz.berichtenmagazijn.service.BerichtService
 import org.jboss.resteasy.reactive.multipart.FileUpload
 import org.jboss.resteasy.reactive.RestForm
@@ -20,13 +22,17 @@ import java.util.UUID
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 class BijlageResource(
-    private val berichtService: BerichtService
+    private val berichtService: BerichtService,
+    private val afzenderResolver: AfzenderResolver,
+    private val autorisatieService: AutorisatieService
 ) {
     @Context
     lateinit var uriInfo: UriInfo
 
     @GET
     fun lijstBijlagen(@PathParam("berichtId") berichtId: UUID): Response {
+        val afzenderOin = afzenderResolver.resolve()
+        autorisatieService.controleerToegang(afzenderOin, "read", berichtId)
         val bijlagen = berichtService.lijstBijlagen(berichtId)
         return Response.ok(bijlagen).build()
     }
@@ -37,6 +43,8 @@ class BijlageResource(
         @PathParam("berichtId") berichtId: UUID,
         @RestForm("bestand") bestand: FileUpload
     ): Response {
+        val afzenderOin = afzenderResolver.resolve()
+        autorisatieService.controleerToegang(afzenderOin, "update", berichtId)
         val bestandsnaam = bestand.fileName()
         require(!bestandsnaam.isNullOrBlank()) { "bestandsnaam mag niet leeg zijn" }
         require(bestandsnaam.length <= 255) { "bestandsnaam mag maximaal 255 tekens bevatten" }

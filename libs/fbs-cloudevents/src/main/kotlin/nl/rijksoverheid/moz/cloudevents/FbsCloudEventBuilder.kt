@@ -25,6 +25,7 @@ object FbsCloudEventBuilder {
      * @param source URN van de bron (gebruik [FbsSourceUrn.create])
      * @param type event type (gebruik [FbsEventTypes] constanten)
      * @param subject optioneel onderwerp (bijv. bericht-ID)
+     * @param dataschema optioneel CloudEvents dataschema URI (bijv. OpenAPI schema referentie)
      * @param data optionele event data als bytes
      * @return het gebouwde [CloudEvent]
      */

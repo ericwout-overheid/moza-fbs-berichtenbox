@@ -7,12 +7,14 @@ import org.jboss.logging.Logger
 import java.util.Optional
 
 /**
- * Resolves het OIN van de afzender uit de security context.
+ * Resolvet het OIN van de afzender uit de security context.
  *
- * In productie wordt het OIN geëxtraheerd uit de JWT `client_id` claim
- * (OAuth 2.0 NL profiel) of de mTLS certificaat Subject DN (Digikoppeling).
+ * In productie wordt het OIN bepaald via (in volgorde):
+ * 1. JWT `client_id` claim (OAuth 2.0 NL profiel)
+ * 2. JWT `azp` claim (authorized party, fallback)
+ * 3. Principal name uit de security context
  *
- * In dev-modus (fbs.security.dev-mode=true) valt terug op een geconfigureerd OIN.
+ * In dev-modus (fbs.security.dev-mode=true) wordt een geconfigureerd OIN gebruikt.
  */
 @ApplicationScoped
 class AfzenderResolver(
@@ -42,15 +44,30 @@ class AfzenderResolver(
         val principal = securityIdentity.principal
             ?: throw IllegalStateException("Geen security principal beschikbaar — is authenticatie geconfigureerd?")
 
-        // OAuth 2.0 NL profiel: client_id claim bevat het OIN
-        val oin = securityIdentity.getAttribute<String>("client_id")
-            ?: securityIdentity.getAttribute<String>("azp")
-            ?: principal.name
-
-        require(oin.matches(Regex("^\\d{20}$"))) {
-            "OIN uit security context is niet geldig (verwacht 20 cijfers): $oin"
+        val clientId = securityIdentity.getAttribute<String>("client_id")
+        if (clientId != null) {
+            log.debugf("OIN opgelost uit client_id claim: %s", clientId)
+            return validateOin(clientId)
         }
 
+        val azp = securityIdentity.getAttribute<String>("azp")
+        if (azp != null) {
+            log.warnf("client_id claim ontbreekt, fallback naar azp claim: %s", azp)
+            return validateOin(azp)
+        }
+
+        log.warnf("client_id en azp claims ontbreken, fallback naar principal.name: %s", principal.name)
+        return validateOin(principal.name)
+    }
+
+    private fun validateOin(oin: String): String {
+        require(oin.matches(OIN_PATTERN)) {
+            "OIN uit security context is niet geldig (verwacht 20 cijfers): $oin"
+        }
         return oin
+    }
+
+    companion object {
+        private val OIN_PATTERN = Regex("^\\d{20}$")
     }
 }

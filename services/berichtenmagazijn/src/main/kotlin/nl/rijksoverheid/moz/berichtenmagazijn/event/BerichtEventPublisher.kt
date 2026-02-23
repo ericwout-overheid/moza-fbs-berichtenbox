@@ -12,6 +12,15 @@ import org.eclipse.microprofile.reactive.messaging.Emitter
 import org.jboss.logging.Logger
 import java.net.URI
 
+/**
+ * Publiceert bericht-lifecycle events naar Kafka als CloudEvents NL GOV.
+ *
+ * Ondersteunt drie events: [FbsEventTypes.BERICHT_ONTVANGEN], [FbsEventTypes.BERICHT_GELEZEN],
+ * en [FbsEventTypes.BERICHT_VERWIJDERD].
+ *
+ * Events zijn fire-and-forget: publicatiefouten worden gelogd op ERROR-niveau maar
+ * propageren niet naar de aanroeper. Dit voorkomt dat Kafka-uitval de REST API blokkeert.
+ */
 @ApplicationScoped
 class BerichtEventPublisher(
     @param:Channel("bericht-ontvangen") private val ontvangenEmitter: Emitter<CloudEvent>,
