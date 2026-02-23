@@ -45,8 +45,7 @@ docker compose -f infrastructure/docker-compose.deps.yml up -d
 
 ## Where can I go for help?
 
-If you need help on a specific repository, you can ask the repository owners.
-If you need help on MinBZK repositories in general, you can e-mail opensource@minbzk.nl.
+If you need help, you can open an issue on the [GitHub repository](https://github.com/ericwout-overheid/moza-fbs-berichtenbox/issues).
 
 ## What does the Code of Conduct mean for me?
 

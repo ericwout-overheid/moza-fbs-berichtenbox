@@ -5,7 +5,7 @@ import java.net.http.HttpClient
 import java.time.Duration
 
 /**
- * Facade voor alle FBS services.
+ * Facade voor FBS services (berichten en berichtenlijst).
  *
  * Gebruik [builder] om een instantie te maken:
  * ```kotlin
@@ -16,6 +16,9 @@ import java.time.Duration
  *
  * val bericht = client.berichten().haalBericht(berichtId)
  * ```
+ *
+ * `berichtenlijstUrl` wordt automatisch afgeleid van `berichtenmagazijnUrl` (port 8081)
+ * als deze niet expliciet is ingesteld.
  */
 class FbsClient private constructor(
     private val berichtenClient: BerichtenClient,

@@ -120,6 +120,7 @@ services:
       echo '  nl.fbs.bericht-gelezen OK' &&
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic nl.fbs.bericht-verwijderd --partitions 3 --replication-factor 1 &&
       echo '  nl.fbs.bericht-verwijderd OK' &&
+      echo 'DLQ topics aanmaken (voorbereid voor toekomstige consumer error handling)...' &&
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic nl.fbs.bericht-ontvangen.dlq --partitions 3 --replication-factor 1 &&
       echo '  nl.fbs.bericht-ontvangen.dlq OK' &&
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic nl.fbs.bericht-gelezen.dlq --partitions 3 --replication-factor 1 &&

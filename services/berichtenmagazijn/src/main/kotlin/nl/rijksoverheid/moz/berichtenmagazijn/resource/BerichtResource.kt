@@ -13,6 +13,7 @@ import jakarta.ws.rs.Produces
 import jakarta.ws.rs.QueryParam
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
+import jakarta.ws.rs.core.UriInfo
 import nl.rijksoverheid.moz.berichtenmagazijn.event.BerichtEventPublisher
 import nl.rijksoverheid.moz.berichtenmagazijn.service.BerichtService
 import nl.rijksoverheid.moz.common.model.BerichtAanmaakVerzoek
@@ -20,6 +21,8 @@ import nl.rijksoverheid.moz.common.model.BerichtStatus
 import nl.rijksoverheid.moz.common.model.BerichtStatusWijziging
 import nl.rijksoverheid.moz.common.model.OntvangerIdType
 import org.eclipse.microprofile.config.inject.ConfigProperty
+import jakarta.ws.rs.core.Context
+import java.net.URI
 import java.util.UUID
 
 @Path("/api/v1/berichten")
@@ -30,6 +33,8 @@ class BerichtResource(
     private val eventPublisher: BerichtEventPublisher,
     @param:ConfigProperty(name = "fbs.dev.afzender-oin") private val afzenderOin: String
 ) {
+    @Context
+    lateinit var uriInfo: UriInfo
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -37,7 +42,8 @@ class BerichtResource(
         // SECURITY: In productie moet afzenderOin uit de OIDC/mTLS security context komen.
         val bericht = berichtService.maakBericht(afzenderOin, verzoek)
         eventPublisher.publishBerichtOntvangen(afzenderOin, bericht)
-        return Response.status(Response.Status.CREATED).entity(bericht).build()
+        val location = uriInfo.absolutePathBuilder.path(bericht.id.toString()).build()
+        return Response.created(location).entity(bericht).build()
     }
 
     @GET

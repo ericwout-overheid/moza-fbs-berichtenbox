@@ -7,8 +7,10 @@ import jakarta.ws.rs.POST
 import jakarta.ws.rs.Path
 import jakarta.ws.rs.PathParam
 import jakarta.ws.rs.Produces
+import jakarta.ws.rs.core.Context
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
+import jakarta.ws.rs.core.UriInfo
 import nl.rijksoverheid.moz.berichtenmagazijn.service.BerichtService
 import org.jboss.resteasy.reactive.multipart.FileUpload
 import org.jboss.resteasy.reactive.RestForm
@@ -20,6 +22,8 @@ import java.util.UUID
 class BijlageResource(
     private val berichtService: BerichtService
 ) {
+    @Context
+    lateinit var uriInfo: UriInfo
 
     @GET
     fun lijstBijlagen(@PathParam("berichtId") berichtId: UUID): Response {
@@ -47,6 +51,7 @@ class BijlageResource(
                 grootte = bestand.size()
             )
         }
-        return Response.status(Response.Status.CREATED).entity(bijlage).build()
+        val location = uriInfo.absolutePathBuilder.path(bijlage.id.toString()).build()
+        return Response.created(location).entity(bijlage).build()
     }
 }
