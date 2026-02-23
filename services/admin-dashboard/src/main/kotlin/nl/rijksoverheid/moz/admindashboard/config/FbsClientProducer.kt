@@ -23,7 +23,8 @@ class FbsClientProducer(
     @ApplicationScoped
     fun fbsClient(): FbsClient {
         if (bearerToken.isBlank()) {
-            log.errorf("fbs.admin.bearer-token is leeg — stel FBS_ADMIN_BEARER_TOKEN omgevingsvariabele in")
+            log.errorf("fbs.admin.bearer-token is leeg — stel FBS_ADMIN_BEARER_TOKEN omgevingsvariabele in. " +
+                "Alle API-aanroepen zullen mislukken tot dit is geconfigureerd.")
         }
         log.infof(
             "FbsClient configuratie: magazijn=%s, lijst=%s",
@@ -36,7 +37,7 @@ class FbsClientProducer(
                 .bearerToken(bearerToken.ifBlank { null })
                 .build()
         } catch (e: Exception) {
-            log.errorf(e, "FbsClient initialisatie mislukt — controleer fbs.*.url en fbs.admin.bearer-token configuratie")
+            log.errorf(e, "FbsClient initialisatie mislukt: %s", e.message)
             throw e
         }
     }

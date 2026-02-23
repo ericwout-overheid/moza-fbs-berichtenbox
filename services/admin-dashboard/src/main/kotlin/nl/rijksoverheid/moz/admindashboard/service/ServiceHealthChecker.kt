@@ -9,8 +9,10 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 data class ServiceStatus(
     val naam: String,
@@ -43,9 +45,21 @@ class ServiceHealthChecker(
 
     fun checkAll(): List<ServiceStatus> {
         val futures = healthUrls.map { url ->
-            executor.submit<ServiceStatus> { checkService(url) }
+            url to executor.submit<ServiceStatus> { checkService(url) }
         }
-        return futures.map { it.get(10, TimeUnit.SECONDS) }
+        return futures.map { (url, future) ->
+            try {
+                future.get(10, TimeUnit.SECONDS)
+            } catch (e: TimeoutException) {
+                val naam = mapPortToNaam(url)
+                log.warnf("Health check timeout voor %s (%s)", naam, url)
+                ServiceStatus(naam = naam, url = url, beschikbaar = false, foutmelding = "Health check timeout (>10s)")
+            } catch (e: ExecutionException) {
+                val naam = mapPortToNaam(url)
+                log.errorf(e.cause, "Onverwachte fout bij health check voor %s (%s)", naam, url)
+                ServiceStatus(naam = naam, url = url, beschikbaar = false, foutmelding = "Onverwachte fout: ${e.cause?.message}")
+            }
+        }
     }
 
     private fun checkService(baseUrl: String): ServiceStatus {
