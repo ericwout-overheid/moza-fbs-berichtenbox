@@ -37,6 +37,8 @@ class BerichtResource(
     @Context
     lateinit var uriInfo: UriInfo
 
+    // Authenticatie is voldoende voor aanmaken — AuthZEN autorisatie per-resource
+    // is niet mogelijk omdat het bericht-ID nog niet bestaat.
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     fun maakBericht(verzoek: BerichtAanmaakVerzoek): Response {
@@ -47,6 +49,7 @@ class BerichtResource(
         return Response.created(location).entity(bericht).build()
     }
 
+    // Lijst-endpoint filtert op ontvanger; per-resource AuthZEN is niet toepasbaar.
     @GET
     fun lijstBerichten(
         @QueryParam("ontvangerIdType") ontvangerIdType: OntvangerIdType?,
@@ -63,6 +66,8 @@ class BerichtResource(
     @GET
     @Path("/{berichtId}")
     fun haalBericht(@PathParam("berichtId") berichtId: UUID): Response {
+        val afzenderOin = afzenderResolver.resolve()
+        autorisatieService.controleerToegang(afzenderOin, "read", berichtId)
         val bericht = berichtService.haalBericht(berichtId)
         return Response.ok(bericht).build()
     }

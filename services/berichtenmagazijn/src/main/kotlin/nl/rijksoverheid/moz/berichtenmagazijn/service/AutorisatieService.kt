@@ -16,6 +16,8 @@ import java.util.UUID
  *
  * Evalueert autorisatieverzoeken bij de PDP (Policy Decision Point) conform
  * het AuthZEN NL GOV profiel. In dev-modus worden checks overgeslagen.
+ *
+ * Bij PDP-onbereikbaarheid geldt fail-closed: toegang wordt geweigerd (503).
  */
 @ApplicationScoped
 class AutorisatieService(
@@ -32,6 +34,7 @@ class AutorisatieService(
      * @param actie de gewenste actie ("read", "update", "delete")
      * @param berichtId ID van het bericht
      * @throws jakarta.ws.rs.ForbiddenException als de actie niet is toegestaan
+     * @throws jakarta.ws.rs.ServiceUnavailableException als de PDP onbereikbaar is
      */
     fun controleerToegang(afzenderOin: String, actie: String, berichtId: UUID) {
         if (devMode) {
@@ -48,12 +51,14 @@ class AutorisatieService(
         val response = try {
             authZenClient.evaluate(request)
         } catch (e: AuthZenException) {
-            log.errorf(e, "AuthZEN PDP onbereikbaar voor %s op bericht %s — toegang geweigerd", actie, berichtId)
-            throw jakarta.ws.rs.ForbiddenException("Autorisatieservice niet beschikbaar")
+            log.errorf(e, "AuthZEN PDP onbereikbaar voor %s op bericht %s — fail-closed", actie, berichtId)
+            throw jakarta.ws.rs.ServiceUnavailableException(
+                "Autorisatieservice tijdelijk niet beschikbaar, probeer het later opnieuw"
+            )
         }
 
         if (!response.decision) {
-            log.warnf("AuthZEN: toegang geweigerd voor OIN %s, actie=%s, bericht=%s", afzenderOin, actie, berichtId)
+            log.warnf("AuthZEN: toegang geweigerd voor actie=%s, bericht=%s", actie, berichtId)
             throw jakarta.ws.rs.ForbiddenException("Niet geautoriseerd voor deze actie")
         }
     }

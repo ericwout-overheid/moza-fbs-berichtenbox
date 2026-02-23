@@ -18,8 +18,9 @@ import nl.rijksoverheid.moz.common.model.OntvangerIdType
 import nl.rijksoverheid.moz.common.model.Page
 import nl.rijksoverheid.moz.common.FbsConstants
 import nl.rijksoverheid.moz.ldv.LdvLogger
-import org.jboss.logging.Logger
+import nl.rijksoverheid.moz.ldv.LdvPseudonimiseerder
 import nl.rijksoverheid.moz.ldv.LdvVerwerking
+import org.jboss.logging.Logger
 import java.io.IOException
 import java.io.InputStream
 import java.net.URI
@@ -32,7 +33,8 @@ class BerichtService(
     private val berichtRepository: BerichtRepository,
     private val bijlageRepository: BijlageRepository,
     private val storageService: MinioStorageService,
-    private val ldvLogger: LdvLogger
+    private val ldvLogger: LdvLogger,
+    private val pseudonimiseerder: LdvPseudonimiseerder
 ) {
 
     private val log = Logger.getLogger(BerichtService::class.java)
@@ -49,7 +51,7 @@ class BerichtService(
         return ldvLogger.withinVerwerking(
             LdvVerwerking(
                 verwerkingsActiviteitId = URI("https://fbs.nl/verwerkingen/bericht-opslaan"),
-                betrokkeneId = verzoek.ontvangerId,
+                betrokkeneId = pseudonimiseerder.pseudonimiseer(verzoek.ontvangerId),
                 betrokkeneIdType = verzoek.ontvangerIdType.name,
                 operatieNaam = "maakBericht"
             )
@@ -67,7 +69,7 @@ class BerichtService(
             ldvLogger.logVerwerking(
                 LdvVerwerking(
                     verwerkingsActiviteitId = URI("https://fbs.nl/verwerkingen/bericht-ophalen"),
-                    betrokkeneId = entity.ontvangerId,
+                    betrokkeneId = pseudonimiseerder.pseudonimiseer(entity.ontvangerId),
                     betrokkeneIdType = entity.ontvangerIdType.name,
                     operatieNaam = "haalBericht"
                 )
@@ -155,7 +157,7 @@ class BerichtService(
         return ldvLogger.withinVerwerking(
             LdvVerwerking(
                 verwerkingsActiviteitId = URI("https://fbs.nl/verwerkingen/bericht-bijwerken"),
-                betrokkeneId = entity.ontvangerId,
+                betrokkeneId = pseudonimiseerder.pseudonimiseer(entity.ontvangerId),
                 betrokkeneIdType = entity.ontvangerIdType.name,
                 operatieNaam = "werkBerichtBij"
             )
@@ -179,7 +181,7 @@ class BerichtService(
         ldvLogger.withinVerwerking(
             LdvVerwerking(
                 verwerkingsActiviteitId = URI("https://fbs.nl/verwerkingen/bericht-verwijderen"),
-                betrokkeneId = entity.ontvangerId,
+                betrokkeneId = pseudonimiseerder.pseudonimiseer(entity.ontvangerId),
                 betrokkeneIdType = entity.ontvangerIdType.name,
                 operatieNaam = "verwijderBericht"
             )

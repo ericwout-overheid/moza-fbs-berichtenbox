@@ -17,6 +17,7 @@ import nl.rijksoverheid.moz.common.model.BerichtStatus
 import nl.rijksoverheid.moz.common.model.BerichtStatusWijziging
 import nl.rijksoverheid.moz.common.model.OntvangerIdType
 import nl.rijksoverheid.moz.ldv.LdvLogger
+import nl.rijksoverheid.moz.ldv.LdvPseudonimiseerder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -32,9 +33,10 @@ class BerichtServiceTest {
     private val bijlageRepository = mockk<BijlageRepository>()
     private val storageService = mockk<MinioStorageService>()
     private val ldvLogger = mockk<LdvLogger>()
+    private val pseudonimiseerder = LdvPseudonimiseerder.create("test-zout-minimaal-32-tekens-lang!")
 
     private val service = BerichtService(
-        berichtRepository, bijlageRepository, storageService, ldvLogger
+        berichtRepository, bijlageRepository, storageService, ldvLogger, pseudonimiseerder
     )
 
     private val testOin = "00000001234567890000"

@@ -40,7 +40,7 @@ class LdvPseudonimiseerder(private val zout: ByteArray) {
         /**
          * Maakt een [LdvPseudonimiseerder] aan met het opgegeven zout als UTF-8 string.
          *
-         * @param zout organisatie-breed geheim (minimaal 32 tekens)
+         * @param zout organisatie-breed geheim (moet minimaal 32 bytes opleveren na UTF-8 codering)
          */
         fun create(zout: String): LdvPseudonimiseerder {
             require(zout.isNotBlank()) { "Zout mag niet leeg zijn" }
