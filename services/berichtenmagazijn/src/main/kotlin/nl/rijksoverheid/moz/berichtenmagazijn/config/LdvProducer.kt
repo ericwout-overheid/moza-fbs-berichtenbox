@@ -8,7 +8,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty
 
 @ApplicationScoped
 class LdvProducer(
-    @param:ConfigProperty(name = "otel.exporter.otlp.endpoint", defaultValue = "http://localhost:4317")
+    @param:ConfigProperty(name = "otel.exporter.otlp.endpoint")
     private val otlpEndpoint: String
 ) {
 

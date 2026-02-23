@@ -7,6 +7,7 @@ plugins {
 dependencies {
     implementation(project(":libs:fbs-common"))
     implementation(project(":libs:fbs-client-sdk"))
+    implementation(project(":libs:fbs-ldv"))
 
     // Vaadin
     implementation(enforcedPlatform(libs.vaadin.bom))

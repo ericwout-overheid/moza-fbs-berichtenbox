@@ -1,4 +1,4 @@
-package nl.rijksoverheid.moz.berichtenlijst.config
+package nl.rijksoverheid.moz.admindashboard.config
 
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.enterprise.inject.Produces

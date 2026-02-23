@@ -10,7 +10,7 @@ info:
   contact:
     name: FBS Team
     url: https://github.com/ericwout-overheid/moza-fbs-berichtenbox/issues
-    email: fbs@example.nl
+    email: fbs@moza.nl
   license:
     name: EUPL-1.2
     url: https://eupl.eu/1.2/nl/
@@ -191,6 +191,12 @@ components:
         Lichtgewicht weergave van een bericht, zonder inhoud. Bevat een
         verwijzing naar het magazijn waar het volledige bericht kan worden
         opgehaald.
+      required:
+        - berichtId
+        - onderwerp
+        - status
+        - aangemaaktOp
+        - magazijnUrl
       properties:
         berichtId:
           type: string
@@ -233,6 +239,12 @@ components:
     BerichtRecordPagina:
       type: object
       description: Gepagineerde lijst van berichtrecords
+      required:
+        - results
+        - page
+        - pageSize
+        - totalPages
+        - totalElements
       properties:
         results:
           type: array
