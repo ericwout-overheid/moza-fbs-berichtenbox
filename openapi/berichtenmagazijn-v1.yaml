@@ -1,4 +1,4 @@
-openapi: 3.1.0
+openapi: 3.0.3
 info:
   title: Berichtenmagazijn API
   version: 1.0.0
@@ -15,11 +15,11 @@ info:
     url: https://eupl.eu/1.2/nl/
 
 servers:
-  - url: https://berichtenmagazijn.fbs.moza.nl
+  - url: https://berichtenmagazijn.fbs.moza.nl/api/v1
     description: Productieomgeving
-  - url: https://berichtenmagazijn.acc.fbs.moza.nl
+  - url: https://berichtenmagazijn.acc.fbs.moza.nl/api/v1
     description: Acceptatieomgeving
-  - url: http://localhost:8080
+  - url: http://localhost:8080/api/v1
     description: Lokale ontwikkelomgeving
 
 tags:
@@ -32,7 +32,7 @@ security:
   - bearerAuth: []
 
 paths:
-  /api/v1/berichten:
+  /berichten:
     post:
       operationId: maakBericht
       summary: Maak een nieuw bericht aan
@@ -147,7 +147,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/v1/berichten/{berichtId}:
+  /berichten/{berichtId}:
     get:
       operationId: haalBericht
       summary: Haal een enkel bericht op
@@ -237,7 +237,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/v1/berichten/{berichtId}/bijlagen:
+  /berichten/{berichtId}/bijlagen:
     get:
       operationId: lijstBijlagen
       summary: Haal bijlagen van een bericht op
@@ -392,19 +392,16 @@ components:
         ontvangerId:
           type: string
           description: Identificatie van de ontvanger
-          examples:
-            - "999999999"
+          example: "999999999"
         onderwerp:
           type: string
           description: Onderwerp van het bericht
           maxLength: 500
-          examples:
-            - "Uw aanvraag is ontvangen"
+          example: "Uw aanvraag is ontvangen"
         inhoud:
           type: string
           description: Inhoud van het bericht
-          examples:
-            - "Beste inwoner, wij hebben uw aanvraag ontvangen."
+          example: "Beste inwoner, wij hebben uw aanvraag ontvangen."
 
     BerichtStatusWijziging:
       type: object
@@ -433,8 +430,7 @@ components:
         afzenderOin:
           type: string
           description: OIN van de afzendende organisatie
-          examples:
-            - "00000001234567890000"
+          example: "00000001234567890000"
         ontvangerIdType:
           $ref: '#/components/schemas/OntvangerIdType'
         ontvangerId:
@@ -453,10 +449,9 @@ components:
           format: date-time
           description: Tijdstip waarop het bericht is aangemaakt
         gelezenOp:
-          type:
-            - string
-            - 'null'
+          type: string
           format: date-time
+          nullable: true
           description: Tijdstip waarop het bericht is gelezen (null indien nog niet gelezen)
         bijlagen:
           type: array
@@ -478,18 +473,15 @@ components:
         bestandsnaam:
           type: string
           description: Naam van het bestand
-          examples:
-            - "beschikking.pdf"
+          example: "beschikking.pdf"
         mediaType:
           type: string
           description: MIME-type van het bestand
-          examples:
-            - "application/pdf"
+          example: "application/pdf"
         grootte:
           type: integer
           description: Bestandsgrootte in bytes
-          examples:
-            - 102400
+          example: 102400
         aangemaaktOp:
           type: string
           format: date-time
@@ -512,23 +504,19 @@ components:
         page:
           type: integer
           description: Huidig paginanummer
-          examples:
-            - 1
+          example: 1
         pageSize:
           type: integer
           description: Aantal resultaten per pagina
-          examples:
-            - 20
+          example: 20
         totalPages:
           type: integer
           description: Totaal aantal pagina's
-          examples:
-            - 5
+          example: 5
         totalElements:
           type: integer
           description: Totaal aantal berichten
-          examples:
-            - 97
+          example: 97
 
     ProblemDetail:
       type: object
@@ -538,23 +526,19 @@ components:
           type: string
           format: uri
           description: URI die het type fout identificeert
-          examples:
-            - "https://example.com/fouten/niet-gevonden"
+          example: "https://example.com/fouten/niet-gevonden"
         title:
           type: string
           description: Korte samenvatting van het probleem
-          examples:
-            - "Bericht niet gevonden"
+          example: "Bericht niet gevonden"
         status:
           type: integer
           description: HTTP-statuscode
-          examples:
-            - 404
+          example: 404
         detail:
           type: string
           description: Gedetailleerde uitleg van het probleem
-          examples:
-            - "Het bericht met ID '550e8400-e29b-41d4-a716-446655440000' bestaat niet."
+          example: "Het bericht met ID '550e8400-e29b-41d4-a716-446655440000' bestaat niet."
         instance:
           type: string
           format: uri
