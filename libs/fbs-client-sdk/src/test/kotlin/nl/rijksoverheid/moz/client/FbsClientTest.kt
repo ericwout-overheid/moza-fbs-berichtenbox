@@ -23,9 +23,6 @@ class FbsClientTest {
 
         assertNotNull(client.berichten())
         assertNotNull(client.berichtenlijst())
-        assertNotNull(client.notificaties())
-        assertNotNull(client.profielen())
-        assertNotNull(client.bereikbaarheid())
     }
 
     @Test
@@ -39,9 +36,6 @@ class FbsClientTest {
         val client = FbsClient.builder()
             .berichtenmagazijnUrl("http://magazijn:8080")
             .berichtenlijstUrl("http://lijst:9081")
-            .notificatieUrl("http://notif:9082")
-            .notificatieprofielUrl("http://profiel:9083")
-            .bereikbaarheidUrl("http://bereik:9084")
             .build()
 
         assertNotNull(client.berichten())

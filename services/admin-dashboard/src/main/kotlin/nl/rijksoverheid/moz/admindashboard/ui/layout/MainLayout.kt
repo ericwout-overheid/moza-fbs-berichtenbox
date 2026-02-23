@@ -21,7 +21,6 @@ class MainLayout : AppLayout() {
         val nav = SideNav()
         nav.addItem(SideNavItem("Dashboard", DashboardView::class.java))
         nav.addItem(SideNavItem("Berichten", BerichtenView::class.java))
-        nav.addItem(SideNavItem("Notificaties", NotificatiesView::class.java))
         nav.addItem(SideNavItem("Systeemstatus", SysteemStatusView::class.java))
         nav.addItem(SideNavItem("LDV Audit Log", LdvAuditLogView::class.java))
 

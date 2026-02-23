@@ -24,7 +24,4 @@ include(":libs:fbs-cloudevents")
 // === Services ===
 include(":services:berichtenmagazijn")
 include(":services:berichtenlijst")
-include(":services:notificatie")
-include(":services:notificatieprofiel")
-include(":services:digitale-bereikbaarheid")
 include(":services:admin-dashboard")

@@ -2,7 +2,6 @@ package nl.rijksoverheid.moz.admindashboard.ui.component
 
 import com.vaadin.flow.component.html.Span
 import nl.rijksoverheid.moz.common.model.BerichtStatus
-import nl.rijksoverheid.moz.common.model.NotificatieStatusWaarde
 
 /**
  * Kleur-gecodeerd badge component voor status weergave.
@@ -28,17 +27,6 @@ class StatusBadge(tekst: String, kleur: BadgeKleur) : Span(tekst) {
                 BerichtStatus.NIEUW -> BadgeKleur.GRIJS
                 BerichtStatus.GELEZEN -> BadgeKleur.BLAUW
                 BerichtStatus.GEARCHIVEERD -> BadgeKleur.GROEN
-            }
-        )
-
-        fun voorNotificatieStatus(status: NotificatieStatusWaarde) = StatusBadge(
-            tekst = status.name,
-            kleur = when (status) {
-                NotificatieStatusWaarde.AANGEMAAKT -> BadgeKleur.GRIJS
-                NotificatieStatusWaarde.VERZONDEN -> BadgeKleur.BLAUW
-                NotificatieStatusWaarde.AFGELEVERD -> BadgeKleur.GROEN
-                NotificatieStatusWaarde.MISLUKT -> BadgeKleur.ROOD
-                NotificatieStatusWaarde.DEFINITIEF_MISLUKT -> BadgeKleur.ROOD
             }
         )
 

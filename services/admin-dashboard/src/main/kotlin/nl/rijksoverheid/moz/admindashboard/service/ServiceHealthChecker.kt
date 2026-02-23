@@ -101,10 +101,7 @@ class ServiceHealthChecker(
     internal companion object {
         private val PORT_NAAM_MAP = mapOf(
             8080 to "Berichtenmagazijn",
-            8081 to "Berichtenlijst",
-            8082 to "Notificatie",
-            8083 to "Notificatieprofiel",
-            8084 to "Digitale Bereikbaarheid"
+            8081 to "Berichtenlijst"
         )
 
         fun mapPortToNaam(url: String): String {
