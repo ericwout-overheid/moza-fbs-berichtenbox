@@ -6,6 +6,9 @@ on:
       - main
     paths:
       - 'docs/architecture/**'
+  pull_request:
+    paths:
+      - 'docs/architecture/**'
   workflow_dispatch:
 
 permissions:
@@ -26,17 +29,20 @@ jobs:
 
       - name: Generate static site
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}/docs/architecture:/var/model \
+          mkdir -p _site
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -v ${{ github.workspace }}/docs/architecture:/var/model:ro \
+            -v ${{ github.workspace }}/_site:/var/output \
             ghcr.io/avisi-cloud/structurizr-site-generatr:1.5.2 \
-            generate-site -w workspace.dsl
+            generate-site -w workspace.dsl --output-dir /var/output
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/architecture/build/site
+          path: _site
 
   deploy:
+    if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     environment:
