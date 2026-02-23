@@ -1,4 +1,4 @@
-openapi: 3.1.0
+openapi: 3.0.3
 info:
   title: Berichtenlijst API
   version: 1.0.0
@@ -16,11 +16,11 @@ info:
     url: https://eupl.eu/1.2/nl/
 
 servers:
-  - url: https://berichtenlijst.fbs.moza.nl
+  - url: https://berichtenlijst.fbs.moza.nl/api/v1
     description: Productieomgeving
-  - url: https://berichtenlijst.acc.fbs.moza.nl
+  - url: https://berichtenlijst.acc.fbs.moza.nl/api/v1
     description: Acceptatieomgeving
-  - url: http://localhost:8081
+  - url: http://localhost:8081/api/v1
     description: Lokale ontwikkelomgeving
 
 tags:
@@ -31,7 +31,7 @@ security:
   - bearerAuth: []
 
 paths:
-  /api/v1/berichtenlijst:
+  /berichtenlijst:
     get:
       operationId: haalBerichtenlijst
       summary: Haal de geaggregeerde berichtenlijst op
@@ -53,8 +53,7 @@ paths:
           schema:
             type: string
           description: Identificatie van de ontvanger
-          examples:
-            - "999999999"
+          example: "999999999"
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
       responses:
@@ -78,7 +77,7 @@ paths:
         '502':
           $ref: '#/components/responses/BadGateway'
 
-  /api/v1/berichtenlijst/zoek:
+  /berichtenlijst/zoek:
     get:
       operationId: zoekBerichten
       summary: Zoek in berichten
@@ -112,8 +111,7 @@ paths:
             type: string
             minLength: 2
           description: Zoekterm om berichten mee te doorzoeken
-          examples:
-            - "belastingaanslag"
+          example: "belastingaanslag"
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/pageSize'
       responses:
@@ -209,18 +207,15 @@ components:
         afzenderOin:
           type: string
           description: OIN van de afzendende organisatie
-          examples:
-            - "00000001234567890000"
+          example: "00000001234567890000"
         afzenderNaam:
           type: string
           description: Naam van de afzendende organisatie
-          examples:
-            - "Belastingdienst"
+          example: "Belastingdienst"
         onderwerp:
           type: string
           description: Onderwerp van het bericht
-          examples:
-            - "Uw aanvraag is ontvangen"
+          example: "Uw aanvraag is ontvangen"
         status:
           $ref: '#/components/schemas/BerichtStatus'
         aangemaaktOp:
@@ -228,17 +223,15 @@ components:
           format: date-time
           description: Tijdstip waarop het bericht is aangemaakt
         gelezenOp:
-          type:
-            - string
-            - 'null'
+          type: string
           format: date-time
+          nullable: true
           description: Tijdstip waarop het bericht is gelezen (null indien nog niet gelezen)
         magazijnUrl:
           type: string
           format: uri
           description: URL waar het volledige bericht kan worden opgehaald
-          examples:
-            - "https://magazijn.fbs.overheid.nl/api/v1/berichten/550e8400-e29b-41d4-a716-446655440000"
+          example: "https://magazijn.fbs.overheid.nl/api/v1/berichten/550e8400-e29b-41d4-a716-446655440000"
 
     BerichtRecordPagina:
       type: object
@@ -258,23 +251,19 @@ components:
         page:
           type: integer
           description: Huidig paginanummer
-          examples:
-            - 1
+          example: 1
         pageSize:
           type: integer
           description: Aantal resultaten per pagina
-          examples:
-            - 20
+          example: 20
         totalPages:
           type: integer
           description: Totaal aantal pagina's
-          examples:
-            - 5
+          example: 5
         totalElements:
           type: integer
           description: Totaal aantal berichten
-          examples:
-            - 97
+          example: 97
 
     ProblemDetail:
       type: object
@@ -284,23 +273,19 @@ components:
           type: string
           format: uri
           description: URI die het type fout identificeert
-          examples:
-            - "https://example.com/fouten/ongeldig-verzoek"
+          example: "https://example.com/fouten/ongeldig-verzoek"
         title:
           type: string
           description: Korte samenvatting van het probleem
-          examples:
-            - "Ongeldig verzoek"
+          example: "Ongeldig verzoek"
         status:
           type: integer
           description: HTTP-statuscode
-          examples:
-            - 400
+          example: 400
         detail:
           type: string
           description: Gedetailleerde uitleg van het probleem
-          examples:
-            - "De parameter 'ontvangerId' is verplicht."
+          example: "De parameter 'ontvangerId' is verplicht."
         instance:
           type: string
           format: uri
