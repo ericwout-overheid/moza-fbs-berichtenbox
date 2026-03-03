@@ -46,7 +46,7 @@ workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federa
                     cmBijlageRes -> cmAutorisatie "Verifieert autorisatie"
                     cmBerichtSvc -> cmRepository "Leest/schrijft"
                     cmBerichtSvc -> cmStorageSvc "Slaat inhoud op"
-                    cmBerichtSvc -> cmEventPublisher "Publiceert events"
+                    cmBerichtRes -> cmEventPublisher "Publiceert events"
                     cmBerichtSvc -> cmLdvLogger "Logt verwerkingen"
                 }
                 cmPg = container "PostgreSQL" "Berichtmetadata" "PostgreSQL 16" "Database"
