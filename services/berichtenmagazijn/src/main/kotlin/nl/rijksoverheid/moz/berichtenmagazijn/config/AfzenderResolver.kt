@@ -30,7 +30,8 @@ class AfzenderResolver(
      * Resolvet het OIN van de huidige afzender.
      *
      * @return het 20-cijferig OIN van de afzender
-     * @throws IllegalStateException als het OIN niet bepaald kan worden
+     * @throws IllegalStateException als het OIN niet bepaald kan worden (geen principal of configuratie)
+     * @throws IllegalArgumentException als het opgeloste OIN niet voldoet aan het 20-cijferig formaat
      */
     fun resolve(): String {
         if (devMode) {
@@ -38,7 +39,7 @@ class AfzenderResolver(
                 IllegalStateException("Dev-modus actief maar fbs.dev.afzender-oin niet geconfigureerd")
             }
             log.debugf("Dev-modus: afzenderOin=%s uit configuratie", oin)
-            return oin
+            return validateOin(oin)
         }
 
         val principal = securityIdentity.principal
