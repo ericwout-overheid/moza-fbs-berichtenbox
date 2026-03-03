@@ -65,12 +65,14 @@ class BerichtService(
         val entity = berichtRepository.vindOpId(berichtId)
             ?: throw BerichtNietGevondenException(berichtId)
 
-        return ldvLogger.withinVerwerking(
-            LdvVerwerking(
-                verwerkingsActiviteitId = URI("https://fbs.nl/verwerkingen/bericht-ophalen"),
-                betrokkeneId = pseudonimiseerder.pseudonimiseer(entity.ontvangerId),
-                betrokkeneIdType = entity.ontvangerIdType.name,
-                operatieNaam = "haalBericht"
+        try {
+            ldvLogger.logVerwerking(
+                LdvVerwerking(
+                    verwerkingsActiviteitId = URI("https://fbs.nl/verwerkingen/bericht-ophalen"),
+                    betrokkeneId = pseudonimiseerder.pseudonimiseer(entity.ontvangerId),
+                    betrokkeneIdType = entity.ontvangerIdType.name,
+                    operatieNaam = "haalBericht"
+                )
             )
         ) {
             BerichtMapper.toDto(entity)

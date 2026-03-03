@@ -12,15 +12,10 @@ import javax.crypto.spec.SecretKeySpec
  *
  * @property zout organisatie-breed geheim voor pseudonimisering (beheer als secret)
  */
-class LdvPseudonimiseerder(zout: ByteArray) {
-    private val zout: ByteArray = zout.copyOf()
+class LdvPseudonimiseerder(private val zout: ByteArray) {
 
     init {
-        require(this.zout.size >= 32) { "Zout moet minimaal 32 bytes zijn voor voldoende entropie" }
-    }
-
-    private val macPrototype: Mac = Mac.getInstance(ALGORITHM).also {
-        it.init(SecretKeySpec(this.zout, ALGORITHM))
+        require(zout.size >= 32) { "Zout moet minimaal 32 bytes zijn voor voldoende entropie" }
     }
 
     /**
@@ -34,7 +29,8 @@ class LdvPseudonimiseerder(zout: ByteArray) {
      */
     fun pseudonimiseer(betrokkeneId: String): String {
         require(betrokkeneId.isNotBlank()) { "betrokkeneId mag niet leeg zijn" }
-        val mac = macPrototype.clone() as Mac
+        val mac = Mac.getInstance(ALGORITHM)
+        mac.init(SecretKeySpec(zout, ALGORITHM))
         return mac.doFinal(betrokkeneId.toByteArray(Charsets.UTF_8)).toHex()
     }
 
