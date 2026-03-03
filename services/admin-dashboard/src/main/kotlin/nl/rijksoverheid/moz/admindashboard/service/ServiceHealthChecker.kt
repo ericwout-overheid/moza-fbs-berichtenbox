@@ -58,6 +58,11 @@ class ServiceHealthChecker(
                 val naam = mapPortToNaam(url)
                 log.errorf(e.cause, "Onverwachte fout bij health check voor %s (%s)", naam, url)
                 ServiceStatus(naam = naam, url = url, beschikbaar = false, foutmelding = "Onverwachte fout: ${e.cause?.message}")
+            } catch (e: InterruptedException) {
+                Thread.currentThread().interrupt()
+                val naam = mapPortToNaam(url)
+                log.warnf("Health check onderbroken voor %s (%s)", naam, url)
+                ServiceStatus(naam = naam, url = url, beschikbaar = false, foutmelding = "Health check onderbroken")
             }
         }
     }

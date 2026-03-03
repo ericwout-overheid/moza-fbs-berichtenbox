@@ -6,60 +6,87 @@ workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federa
         burger = person "Burger" "Ontvangt berichten en notificaties van overheidsorganisaties"
         medewerkerA = person "Medewerker A" "Verstuurt berichten namens Organisatie A"
         medewerkerB = person "Medewerker B" "Verstuurt berichten namens Organisatie B"
-        medewerkerC = person "Medewerker C" "Verstuurt berichten namens Organisatie C"
         beheerder = person "Beheerder" "Monitort en beheert het berichtenstelsel"
 
         // Externe systemen
         authzen = softwareSystem "AuthZEN / FTV" "Federatieve Toegangsverlening - autorisatie van verzoeken" "Extern Systeem"
         profielService = softwareSystem "Profiel Service" "Contactgegevens, communicatievoorkeuren en toestemmingsbeheer (MoZa)" "Extern Systeem"
-        notificatieService = softwareSystem "Notificatie Service" "Multi-channel notificatiebezorging (e-mail, SMS, app) (MoZa)" "Extern Systeem"
-        smtpServer = softwareSystem "SMTP Server" "Bezorgt e-mailnotificaties" "Extern Systeem"
-        smsGateway = softwareSystem "SMS Gateway" "Bezorgt SMS-notificaties" "Extern Systeem"
+        notificatieService = softwareSystem "Notificatie Service" "Multi-channel notificatiebezorging via e-mail, SMS en app (MoZa)" "Extern Systeem"
 
-        // Deelnemende organisaties met eigen berichtenmagazijn
+        // Deelnemende organisatie met eigen berichtenmagazijn
         orgA = softwareSystem "Organisatie A" "Deelnemende overheidsorganisatie met eigen berichtenmagazijn" "Deelnemer" {
-            magazijnA = container "Berichtenmagazijn" "Berichten opslaan en ophalen" "Quarkus / Kotlin" "Magazijn"
-            pgA = container "PostgreSQL" "Berichtmetadata" "PostgreSQL 16" "Database"
-            minioA = container "MinIO" "Berichtinhoud en bijlagen" "MinIO" "Database"
+            magazijn = container "Berichtenmagazijn" "Berichten opslaan en ophalen" "Quarkus / Kotlin" "Magazijn"
+            pg = container "PostgreSQL" "Berichtmetadata" "PostgreSQL 16" "Database"
+            minio = container "MinIO" "Berichtinhoud en bijlagen" "MinIO" "Database"
 
-            magazijnA -> pgA "Leest/schrijft metadata" "JDBC"
-            magazijnA -> minioA "Slaat inhoud en bijlagen op" "S3 REST API"
-        }
-
-        orgB = softwareSystem "Organisatie B" "Deelnemende overheidsorganisatie met eigen berichtenmagazijn" "Deelnemer" {
-            magazijnB = container "Berichtenmagazijn" "Berichten opslaan en ophalen" "Quarkus / Kotlin" "Magazijn"
-            pgB = container "PostgreSQL" "Berichtmetadata" "PostgreSQL 16" "Database"
-            minioB = container "MinIO" "Berichtinhoud en bijlagen" "MinIO" "Database"
-
-            magazijnB -> pgB "Leest/schrijft metadata" "JDBC"
-            magazijnB -> minioB "Slaat inhoud en bijlagen op" "S3 REST API"
+            magazijn -> pg "Leest/schrijft metadata" "JDBC"
+            magazijn -> minio "Slaat inhoud en bijlagen op" "S3 REST API"
         }
 
         // Organisatie zonder eigen magazijn - gebruikt het centraal berichtenmagazijn
-        orgC = softwareSystem "Organisatie C" "Deelnemende overheidsorganisatie zonder eigen magazijn" "Deelnemer"
+        orgB = softwareSystem "Organisatie B" "Deelnemende overheidsorganisatie zonder eigen magazijn" "Deelnemer"
 
         // Het Federatief Berichtenstelsel - een stelsel van software systemen
         group "Federatief Berichtenstelsel" {
 
             centraalMagazijn = softwareSystem "Centraal Berichtenmagazijn" "Berichten opslaan en ophalen voor organisaties zonder eigen magazijn" "FBS Dienst" {
-                cmApp = container "Berichtenmagazijn API" "REST API voor berichten opslaan en ophalen" "Quarkus / Kotlin" "Service"
+                cmApp = container "Berichtenmagazijn API" "REST API voor berichten opslaan en ophalen" "Quarkus / Kotlin" "Service" {
+                    cmBerichtRes = component "Berichten API" "REST endpoints voor berichten CRUD" "JAX-RS Resource"
+                    cmBijlageRes = component "Bijlagen API" "REST endpoints voor bijlagen upload/download" "JAX-RS Resource"
+                    cmBerichtSvc = component "BerichtService" "Berichtlevenscyclus: aanmaken, ophalen, bijwerken, verwijderen" "CDI Bean"
+                    cmAutorisatie = component "AutorisatieService" "Verifieert autorisatie via AuthZEN/FTV (fail-closed)" "CDI Bean"
+                    cmEventPublisher = component "EventPublisher" "Publiceert CloudEvents NL GOV naar Kafka" "Reactive Messaging"
+                    cmStorageSvc = component "ObjectStorageService" "Berichtinhoud en bijlagen opslaan/ophalen" "MinIO SDK"
+                    cmRepository = component "BerichtRepository" "Persistentie van berichten en bijlagen" "Panache ORM"
+                    cmLdvLogger = component "LDV Logger" "Logt dataverwerkingen conform LDV-standaard" "OpenTelemetry"
+
+                    cmBerichtRes -> cmBerichtSvc "Gebruikt"
+                    cmBijlageRes -> cmBerichtSvc "Gebruikt"
+                    cmBerichtRes -> cmAutorisatie "Verifieert autorisatie"
+                    cmBijlageRes -> cmAutorisatie "Verifieert autorisatie"
+                    cmBerichtSvc -> cmRepository "Leest/schrijft"
+                    cmBerichtSvc -> cmStorageSvc "Slaat inhoud op"
+                    cmBerichtRes -> cmEventPublisher "Publiceert events"
+                    cmBerichtSvc -> cmLdvLogger "Logt verwerkingen"
+                }
                 cmPg = container "PostgreSQL" "Berichtmetadata" "PostgreSQL 16" "Database"
                 cmMinio = container "MinIO" "Berichtinhoud en bijlagen" "MinIO" "Database"
+                cmKafka = container "Kafka" "Asynchrone event streaming voor bericht-lifecycle events" "Apache Kafka (KRaft)" "Queue"
 
-                cmApp -> cmPg "Leest/schrijft metadata" "JDBC"
-                cmApp -> cmMinio "Slaat inhoud en bijlagen op" "S3 REST API"
+                cmRepository -> cmPg "Leest/schrijft metadata" "JDBC"
+                cmStorageSvc -> cmMinio "Slaat inhoud en bijlagen op" "S3 REST API"
+                cmEventPublisher -> cmKafka "Publiceert events" "Kafka Producer" "Async"
             }
 
             berichtenlijst = softwareSystem "Berichtenlijst" "Aggregeert berichtrecords uit alle aangesloten magazijnen" "FBS Dienst" {
-                blApp = container "Berichtenlijst API" "REST API voor geaggregeerde berichtrecords" "Quarkus / Kotlin" "Service"
+                blApp = container "Berichtenlijst API" "REST API voor geaggregeerde berichtrecords" "Quarkus / Kotlin" "Service" {
+                    blResource = component "Berichtenlijst API" "REST endpoints voor berichtenlijst en zoeken" "JAX-RS Resource"
+                    blService = component "BerichtenlijstService" "Aggregeert en cachet berichtrecords" "CDI Bean"
+                    blCache = component "Cache" "In-memory cache voor berichtrecords (60s TTL)" "Caffeine"
+                    blMagazijnClient = component "MagazijnClient" "REST client naar berichtenmagazijnen" "REST Client"
+                    blLdvLogger = component "LDV Logger" "Logt dataverwerkingen conform LDV-standaard" "OpenTelemetry"
+
+                    blResource -> blService "Gebruikt"
+                    blService -> blCache "Leest/schrijft cache"
+                    blService -> blMagazijnClient "Haalt berichtrecords op"
+                    blService -> blLdvLogger "Logt verwerkingen"
+                }
             }
 
             adminDashboard = softwareSystem "Admin Dashboard" "Beheer-UI en systeemmonitoring" "FBS Dienst" {
-                adApp = container "Admin Dashboard UI" "Web-based beheeromgeving" "Quarkus / Vaadin" "Service"
+                adApp = container "Admin Dashboard UI" "Web-based beheeromgeving" "Quarkus / Vaadin" "Service" {
+                    adViews = component "Vaadin Views" "Dashboard, Berichten, Systeemstatus en LDV Audit Log views" "Vaadin"
+                    adDataService = component "DashboardDataService" "Haalt berichtdata op via FBS Client SDK" "CDI Bean"
+                    adHealthChecker = component "ServiceHealthChecker" "Controleert beschikbaarheid van FBS diensten" "HTTP Client"
+                    adLdvLogger = component "LDV Logger" "Logt dataverwerkingen conform LDV-standaard" "OpenTelemetry"
+
+                    adViews -> adDataService "Toont data van"
+                    adViews -> adHealthChecker "Toont status van"
+                    adDataService -> adLdvLogger "Logt verwerkingen"
+                }
             }
 
             // Gedeelde infrastructuur
-            kafka = softwareSystem "Kafka" "Asynchrone event streaming tussen magazijnen en diensten" "Infrastructuur"
             ldvLogboek = softwareSystem "LDV Logboek" "Logboek Dataverwerkingen - logging van dataverwerkingen conform LDV-standaard" "Infrastructuur"
         }
 
@@ -68,7 +95,6 @@ workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federa
         // Medewerkers -> hun organisatie
         medewerkerA -> orgA "Verstuurt berichten via"
         medewerkerB -> orgB "Verstuurt berichten via"
-        medewerkerC -> orgC "Verstuurt berichten via"
 
         // Burger
         burger -> berichtenlijst "Bekijkt berichten" "REST API"
@@ -77,39 +103,31 @@ workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federa
         beheerder -> adminDashboard "Beheert systeem via" "HTTPS (browser)"
 
         // Organisaties -> FBS diensten
-        orgA -> berichtenlijst "Notificeert over nieuwe/gelezen/verwijderde berichten" "CloudEvents via FSC"
-        orgB -> berichtenlijst "Notificeert over nieuwe/gelezen/verwijderde berichten" "CloudEvents via FSC"
-        orgC -> centraalMagazijn "Verstuurt en ontvangt berichten" "REST API via FSC"
-
-        // Berichtenlijst aggregeert uit alle magazijnen
-        berichtenlijst -> centraalMagazijn "Haalt berichtrecords op" "REST API"
-        berichtenlijst -> orgA "Haalt berichtrecords op" "REST API via FSC"
-        berichtenlijst -> orgB "Haalt berichtrecords op" "REST API via FSC"
-        berichtenlijst -> kafka "Publiceert interne events" "Kafka Producer"
-
-        // Centraal Berichtenmagazijn -> infrastructuur
-        centraalMagazijn -> kafka "Publiceert events (bericht-ontvangen, gelezen, verwijderd)" "Kafka Producer"
+        orgB -> centraalMagazijn "Verstuurt en ontvangt berichten" "REST API via FSC"
 
         // Berichtenlijst notificeert externe Notificatie Service
-        berichtenlijst -> notificatieService "Stuurt bericht-events door" "CloudEvents webhook"
+        berichtenlijst -> notificatieService "Stuurt bericht-events door" "CloudEvents webhook" "Async"
 
-        // Notificatie Service (extern) bezorgt notificaties
+        // Notificatie Service (extern) haalt contactgegevens op
         notificatieService -> profielService "Haalt contactgegevens en voorkeuren op" "REST API"
-        notificatieService -> smtpServer "Verstuurt e-mailnotificaties" "SMTP"
-        notificatieService -> smsGateway "Verstuurt SMS-notificaties" "HTTPS"
 
-        // Admin Dashboard -> diensten
-        adminDashboard -> centraalMagazijn "Beheert berichten" "REST API (FBS Client SDK)"
-        adminDashboard -> berichtenlijst "Bekijkt berichtoverzichten" "REST API (FBS Client SDK)"
+        // Autorisatie (component-niveau)
+        cmAutorisatie -> authzen "Evalueert access request" "AuthZEN REST API"
 
-        // Autorisatie
-        centraalMagazijn -> authzen "Verifieert autorisatie" "AuthZEN REST API"
-        berichtenlijst -> authzen "Verifieert autorisatie" "AuthZEN REST API"
+        // Berichtenlijst -> magazijnen (component-niveau)
+        blMagazijnClient -> cmApp "Haalt berichtrecords op" "REST API"
+        blMagazijnClient -> orgA "Haalt berichtrecords op" "REST API via FSC"
 
-        // Alle FBS diensten -> LDV Logboek (via moza-logboekdataverwerking library)
-        centraalMagazijn -> ldvLogboek "Logt dataverwerkingen" "LDV / ClickHouse"
-        berichtenlijst -> ldvLogboek "Logt dataverwerkingen" "LDV / ClickHouse"
-        adminDashboard -> ldvLogboek "Logt dataverwerkingen" "LDV / ClickHouse"
+        // Admin Dashboard -> diensten (component-niveau)
+        adDataService -> cmApp "Beheert berichten" "REST API (FBS Client SDK)"
+        adDataService -> blApp "Bekijkt berichtoverzichten" "REST API (FBS Client SDK)"
+        adHealthChecker -> cmApp "Controleert gezondheid" "HTTP"
+        adHealthChecker -> blApp "Controleert gezondheid" "HTTP"
+
+        // LDV Logboek (component-niveau)
+        cmLdvLogger -> ldvLogboek "Logt dataverwerkingen" "OTLP"
+        blLdvLogger -> ldvLogboek "Logt dataverwerkingen" "OTLP"
+        adLdvLogger -> ldvLogboek "Logt dataverwerkingen" "OTLP"
     }
 
     views {
@@ -138,57 +156,98 @@ workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federa
             autoLayout
         }
 
-        container orgA "OrganisatieA" "Berichtenmagazijn van Organisatie A" {
+        container berichtenlijst "BerichtenlijstContainers" "Containers binnen de Berichtenlijst" {
+            include *
+            autoLayout
+        }
+
+        container adminDashboard "AdminDashboardContainers" "Containers binnen het Admin Dashboard" {
+            include *
+            autoLayout
+        }
+
+        component cmApp "BerichtenmagazijnComponenten" "Componenten binnen de Berichtenmagazijn API" {
+            include *
+            autoLayout
+        }
+
+        component blApp "BerichtenlijstComponenten" "Componenten binnen de Berichtenlijst API" {
+            include *
+            autoLayout
+        }
+
+        component adApp "AdminDashboardComponenten" "Componenten binnen de Admin Dashboard UI" {
             include *
             autoLayout
         }
 
         styles {
+            element "Element" {
+                background #1168BD
+                color #ffffff
+                stroke #0B4884
+                fontSize 22
+            }
             element "Software System" {
-                background #1168bd
+                background #1168BD
                 color #ffffff
             }
             element "FBS Dienst" {
                 background #438DD5
                 color #ffffff
+                stroke #2E6295
             }
             element "Deelnemer" {
-                background #2E7D32
+                background #8C8C8C
                 color #ffffff
+                border dashed
             }
             element "Infrastructuur" {
                 background #999999
                 color #ffffff
+                stroke #6B6B6B
                 shape Pipe
             }
             element "Extern Systeem" {
                 background #666666
                 color #ffffff
+                border dashed
             }
             element "Person" {
                 shape Person
-                background #08427b
+                background #08427B
                 color #ffffff
+                stroke #052E56
             }
             element "Service" {
                 shape RoundedBox
                 background #438DD5
                 color #ffffff
+                stroke #2E6295
             }
             element "Magazijn" {
-                shape RoundedBox
-                background #2E7D32
+                shape Hexagon
+                background #438DD5
                 color #ffffff
+                stroke #2E6295
             }
             element "Database" {
                 shape Cylinder
-                background #999999
-                color #ffffff
+                background #B3B3B3
+                color #000000
             }
             element "Queue" {
                 shape Pipe
-                background #999999
-                color #ffffff
+                background #B3B3B3
+                color #000000
+            }
+            relationship "Relationship" {
+                color #707070
+                thickness 2
+            }
+            relationship "Async" {
+                style dashed
+                color #707070
             }
         }
     }

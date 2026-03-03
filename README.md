@@ -124,6 +124,31 @@ Dit project implementeert de volgende overheidsstandaarden:
 | **NLGov ADR** | API Design Rules | [Specificatie](https://gitdocumentatie.logius.nl/publicatie/api/adr/) |
 | **CloudEvents** | NL GOV profiel voor CloudEvents | [Specificatie](https://logius-standaarden.github.io/NL-GOV-profile-for-CloudEvents/) |
 
+## C4 Architectuurdiagrammen
+
+De architectuur is beschreven als [C4 model](https://c4model.com/) in `docs/architecture/workspace.dsl` (Structurizr DSL).
+
+### Lokaal bekijken
+
+```bash
+# Start Structurizr Lite op http://localhost:8080
+docker run --rm -p 8080:8080 \
+  -v ./docs/architecture:/usr/local/structurizr \
+  structurizr/lite:latest
+```
+
+> **Let op:** stop eerst eventueel draaiende services op poort 8080, of kies een andere poort (bijv. `-p 8180:8080`).
+
+### Valideren
+
+```bash
+docker run --rm \
+  -v ./docs/architecture:/workspace \
+  structurizr/cli:latest validate -w /workspace/workspace.dsl
+```
+
+Bij een push naar GitHub genereert de `architecture.yml` workflow automatisch een statische site.
+
 ## Bijdragen
 
 Bijdragen zijn welkom! Lees de [CONTRIBUTING.md](CONTRIBUTING.md) voor richtlijnen over hoe je kunt bijdragen aan dit project.
