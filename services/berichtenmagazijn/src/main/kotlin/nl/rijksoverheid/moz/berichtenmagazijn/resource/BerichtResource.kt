@@ -83,7 +83,7 @@ class BerichtResource(
         autorisatieService.controleerToegang(afzenderOin, "update", berichtId)
         val bericht = berichtService.werkBerichtBij(berichtId, wijziging)
         if (wijziging.status == BerichtStatus.GELEZEN) {
-            eventPublisher.publishBerichtGelezen(bericht.afzenderOin, bericht)
+            eventPublisher.publishBerichtGelezen(afzenderOin, bericht)
         }
         return Response.ok(bericht).build()
     }
