@@ -49,7 +49,7 @@ class BerichtResource(
         return Response.created(location).entity(bericht).build()
     }
 
-    // Lijst-endpoint filtert op ontvanger; per-resource AuthZEN is niet toepasbaar.
+    // Geen per-resource AuthZEN check: dit endpoint retourneert een collectie, geen enkel bericht.
     @GET
     fun lijstBerichten(
         @QueryParam("ontvangerIdType") ontvangerIdType: OntvangerIdType?,
@@ -59,6 +59,7 @@ class BerichtResource(
         @QueryParam("page") @DefaultValue("1") page: Int,
         @QueryParam("pageSize") @DefaultValue("20") pageSize: Int
     ): Response {
+        afzenderResolver.resolve() // Verifieer authenticatie
         val pagina = berichtService.lijstBerichten(ontvangerIdType, ontvangerId, status, onderwerp, page, pageSize)
         return Response.ok(pagina).build()
     }
