@@ -11,15 +11,15 @@ import java.util.UUID
 @ApplicationScoped
 class BerichtRepository : PanacheRepositoryBase<BerichtEntity, UUID> {
 
-    fun vindOpId(id: UUID): BerichtEntity? = findById(id)
+    fun getById(id: UUID): BerichtEntity? = findById(id)
 
-    fun bewaar(entity: BerichtEntity) = persist(entity)
+    fun save(entity: BerichtEntity) = persist(entity)
 
-    fun verwijderOpId(id: UUID): Boolean = deleteById(id)
+    fun removeById(id: UUID): Boolean = deleteById(id)
 
-    fun telAlles(): Long = count()
+    fun countAll(): Long = count()
 
-    fun vindAlles(): PanacheQuery<BerichtEntity> = findAll()
+    fun queryAll(): PanacheQuery<BerichtEntity> = findAll()
 
     fun findByOntvanger(idType: OntvangerIdType, id: String, page: Int, size: Int): List<BerichtEntity> =
         find("ontvangerIdType = ?1 and ontvangerId = ?2 order by aangemaaktOp desc", idType, id)

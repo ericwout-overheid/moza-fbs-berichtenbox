@@ -8,7 +8,7 @@ import java.util.UUID
 @ApplicationScoped
 class BijlageRepository : PanacheRepositoryBase<BijlageEntity, UUID> {
 
-    fun bewaar(entity: BijlageEntity) = persist(entity)
+    fun save(entity: BijlageEntity) = persist(entity)
 
     fun findByBerichtId(berichtId: UUID): List<BijlageEntity> =
         find("bericht.id", berichtId).list()

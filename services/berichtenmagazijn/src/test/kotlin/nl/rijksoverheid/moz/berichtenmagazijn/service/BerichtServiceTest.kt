@@ -58,7 +58,7 @@ class BerichtServiceTest {
             inhoud = "Test inhoud"
         )
 
-        every { berichtRepository.bewaar(any<BerichtEntity>()) } just Runs
+        every { berichtRepository.save(any<BerichtEntity>()) } just Runs
 
         val bericht = service.maakBericht(testOin, verzoek)
 
@@ -88,7 +88,7 @@ class BerichtServiceTest {
         val berichtId = UUID.randomUUID()
         val entity = createTestEntity(berichtId)
 
-        every { berichtRepository.vindOpId(berichtId) } returns entity
+        every { berichtRepository.getById(berichtId) } returns entity
 
         val bericht = service.haalBericht(berichtId)
 
@@ -99,7 +99,7 @@ class BerichtServiceTest {
     @Test
     fun `haalBericht throws exception when not found`() {
         val berichtId = UUID.randomUUID()
-        every { berichtRepository.vindOpId(berichtId) } returns null
+        every { berichtRepository.getById(berichtId) } returns null
 
         assertThrows<BerichtNietGevondenException> {
             service.haalBericht(berichtId)
@@ -149,8 +149,8 @@ class BerichtServiceTest {
         val entity = createTestEntity()
         val query = mockk<PanacheQuery<BerichtEntity>>()
 
-        every { berichtRepository.telAlles() } returns 1L
-        every { berichtRepository.vindAlles() } returns query
+        every { berichtRepository.countAll() } returns 1L
+        every { berichtRepository.queryAll() } returns query
         every { query.page(0, 20) } returns query
         every { query.list() } returns listOf(entity)
 
@@ -165,8 +165,8 @@ class BerichtServiceTest {
         val berichtId = UUID.randomUUID()
         val entity = createTestEntity(berichtId)
 
-        every { berichtRepository.vindOpId(berichtId) } returns entity
-        every { berichtRepository.bewaar(any<BerichtEntity>()) } just Runs
+        every { berichtRepository.getById(berichtId) } returns entity
+        every { berichtRepository.save(any<BerichtEntity>()) } just Runs
 
         val bericht = service.werkBerichtBij(berichtId, BerichtStatusWijziging(BerichtStatus.GELEZEN))
 
@@ -187,15 +187,15 @@ class BerichtServiceTest {
         )
         entity.bijlagen.add(bijlage)
 
-        every { berichtRepository.vindOpId(berichtId) } returns entity
+        every { berichtRepository.getById(berichtId) } returns entity
         every { storageService.delete(any()) } just Runs
-        every { berichtRepository.verwijderOpId(berichtId) } returns true
+        every { berichtRepository.removeById(berichtId) } returns true
 
         val afzenderOin = service.verwijderBericht(berichtId)
 
         assertEquals(testOin, afzenderOin)
         verify { storageService.delete(bijlage.objectKey) }
-        verify { berichtRepository.verwijderOpId(berichtId) }
+        verify { berichtRepository.removeById(berichtId) }
     }
 
     @Test
@@ -204,9 +204,9 @@ class BerichtServiceTest {
         val entity = createTestEntity(berichtId)
         val inputStream = ByteArrayInputStream("test data".toByteArray())
 
-        every { berichtRepository.vindOpId(berichtId) } returns entity
+        every { berichtRepository.getById(berichtId) } returns entity
         every { storageService.upload(any(), any(), any(), any()) } just Runs
-        every { bijlageRepository.bewaar(any<BijlageEntity>()) } just Runs
+        every { bijlageRepository.save(any<BijlageEntity>()) } just Runs
 
         val bijlage = service.uploadBijlage(berichtId, "test.pdf", "application/pdf", inputStream, 9L)
 
@@ -229,7 +229,7 @@ class BerichtServiceTest {
             objectKey = "berichten/$berichtId/bijlagen/test/doc.pdf"
         )
 
-        every { berichtRepository.vindOpId(berichtId) } returns entity
+        every { berichtRepository.getById(berichtId) } returns entity
         every { bijlageRepository.findByBerichtId(berichtId) } returns listOf(bijlage)
 
         val result = service.lijstBijlagen(berichtId)
@@ -247,8 +247,8 @@ class BerichtServiceTest {
             gelezenOp = originalGelezenOp
         }
 
-        every { berichtRepository.vindOpId(berichtId) } returns entity
-        every { berichtRepository.bewaar(any<BerichtEntity>()) } just Runs
+        every { berichtRepository.getById(berichtId) } returns entity
+        every { berichtRepository.save(any<BerichtEntity>()) } just Runs
 
         val bericht = service.werkBerichtBij(berichtId, BerichtStatusWijziging(BerichtStatus.GELEZEN))
 
@@ -269,9 +269,9 @@ class BerichtServiceTest {
         )
         entity.bijlagen.addAll(listOf(bijlage1, bijlage2))
 
-        every { berichtRepository.vindOpId(berichtId) } returns entity
+        every { berichtRepository.getById(berichtId) } returns entity
         every { storageService.delete(any()) } just Runs
-        every { berichtRepository.verwijderOpId(berichtId) } returns true
+        every { berichtRepository.removeById(berichtId) } returns true
 
         service.verwijderBericht(berichtId)
 
@@ -282,7 +282,7 @@ class BerichtServiceTest {
     @Test
     fun `uploadBijlage throws exception when bericht not found`() {
         val berichtId = UUID.randomUUID()
-        every { berichtRepository.vindOpId(berichtId) } returns null
+        every { berichtRepository.getById(berichtId) } returns null
 
         assertThrows<BerichtNietGevondenException> {
             service.uploadBijlage(
@@ -297,7 +297,7 @@ class BerichtServiceTest {
     @Test
     fun `lijstBijlagen throws exception when bericht not found`() {
         val berichtId = UUID.randomUUID()
-        every { berichtRepository.vindOpId(berichtId) } returns null
+        every { berichtRepository.getById(berichtId) } returns null
 
         assertThrows<BerichtNietGevondenException> {
             service.lijstBijlagen(berichtId)
@@ -323,8 +323,8 @@ class BerichtServiceTest {
         val entity = createTestEntity()
         val query = mockk<PanacheQuery<BerichtEntity>>()
 
-        every { berichtRepository.telAlles() } returns 1L
-        every { berichtRepository.vindAlles() } returns query
+        every { berichtRepository.countAll() } returns 1L
+        every { berichtRepository.queryAll() } returns query
         every { query.page(0, 100) } returns query
         every { query.list() } returns listOf(entity)
 
@@ -350,7 +350,7 @@ class BerichtServiceTest {
     @Test
     fun `werkBerichtBij throws exception when not found`() {
         val berichtId = UUID.randomUUID()
-        every { berichtRepository.vindOpId(berichtId) } returns null
+        every { berichtRepository.getById(berichtId) } returns null
 
         assertThrows<BerichtNietGevondenException> {
             service.werkBerichtBij(berichtId, BerichtStatusWijziging(BerichtStatus.GELEZEN))
@@ -362,8 +362,8 @@ class BerichtServiceTest {
         val berichtId = UUID.randomUUID()
         val entity = createTestEntity(berichtId)
 
-        every { berichtRepository.vindOpId(berichtId) } returns entity
-        every { berichtRepository.bewaar(any<BerichtEntity>()) } just Runs
+        every { berichtRepository.getById(berichtId) } returns entity
+        every { berichtRepository.save(any<BerichtEntity>()) } just Runs
 
         val bericht = service.werkBerichtBij(berichtId, BerichtStatusWijziging(BerichtStatus.GEARCHIVEERD))
 
@@ -374,7 +374,7 @@ class BerichtServiceTest {
     @Test
     fun `verwijderBericht throws exception when not found`() {
         val berichtId = UUID.randomUUID()
-        every { berichtRepository.vindOpId(berichtId) } returns null
+        every { berichtRepository.getById(berichtId) } returns null
 
         assertThrows<BerichtNietGevondenException> {
             service.verwijderBericht(berichtId)
@@ -395,8 +395,8 @@ class BerichtServiceTest {
         )
         entity.bijlagen.addAll(listOf(bijlage1, bijlage2))
 
-        every { berichtRepository.vindOpId(berichtId) } returns entity
-        every { berichtRepository.verwijderOpId(berichtId) } returns true
+        every { berichtRepository.getById(berichtId) } returns entity
+        every { berichtRepository.removeById(berichtId) } returns true
         every { storageService.delete("key1") } throws RuntimeException("MinIO down")
         every { storageService.delete("key2") } just Runs
 
@@ -412,9 +412,9 @@ class BerichtServiceTest {
         val berichtId = UUID.randomUUID()
         val entity = createTestEntity(berichtId)
 
-        every { berichtRepository.vindOpId(berichtId) } returns entity
+        every { berichtRepository.getById(berichtId) } returns entity
         every { storageService.upload(any(), any(), any(), any()) } just Runs
-        every { bijlageRepository.bewaar(any<BijlageEntity>()) } throws RuntimeException("DB error")
+        every { bijlageRepository.save(any<BijlageEntity>()) } throws RuntimeException("DB error")
         every { storageService.delete(any()) } just Runs
 
         assertThrows<RuntimeException> {
