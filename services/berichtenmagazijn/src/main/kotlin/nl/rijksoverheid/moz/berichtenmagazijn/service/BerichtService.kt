@@ -56,13 +56,13 @@ class BerichtService(
                 operatieNaam = "maakBericht"
             )
         ) {
-            berichtRepository.bewaar(entity)
+            berichtRepository.save(entity)
             BerichtMapper.toDto(entity)
         }
     }
 
     fun haalBericht(berichtId: UUID): Bericht {
-        val entity = berichtRepository.vindOpId(berichtId)
+        val entity = berichtRepository.getById(berichtId)
             ?: throw BerichtNietGevondenException(berichtId)
 
         try {
@@ -136,8 +136,8 @@ class BerichtService(
             )
         }
 
-        val total = berichtRepository.telAlles()
-        val entities = berichtRepository.vindAlles()
+        val total = berichtRepository.countAll()
+        val entities = berichtRepository.queryAll()
             .page(zeroBasedPage, effectivePageSize)
             .list()
 
@@ -151,7 +151,7 @@ class BerichtService(
     }
 
     fun werkBerichtBij(berichtId: UUID, wijziging: BerichtStatusWijziging): Bericht {
-        val entity = berichtRepository.vindOpId(berichtId)
+        val entity = berichtRepository.getById(berichtId)
             ?: throw BerichtNietGevondenException(berichtId)
 
         return ldvLogger.withinVerwerking(
@@ -166,13 +166,13 @@ class BerichtService(
             if (wijziging.status == BerichtStatus.GELEZEN && entity.gelezenOp == null) {
                 entity.gelezenOp = Instant.now()
             }
-            berichtRepository.bewaar(entity)
+            berichtRepository.save(entity)
             BerichtMapper.toDto(entity)
         }
     }
 
     fun verwijderBericht(berichtId: UUID): String {
-        val entity = berichtRepository.vindOpId(berichtId)
+        val entity = berichtRepository.getById(berichtId)
             ?: throw BerichtNietGevondenException(berichtId)
 
         val afzenderOin = entity.afzenderOin
@@ -186,7 +186,7 @@ class BerichtService(
                 operatieNaam = "verwijderBericht"
             )
         ) {
-            val deleted = berichtRepository.verwijderOpId(berichtId)
+            val deleted = berichtRepository.removeById(berichtId)
             if (!deleted) throw BerichtNietGevondenException(berichtId)
         }
 
@@ -213,7 +213,7 @@ class BerichtService(
         inputStream: InputStream,
         grootte: Long
     ): BijlageMetadata {
-        val bericht = berichtRepository.vindOpId(berichtId)
+        val bericht = berichtRepository.getById(berichtId)
             ?: throw BerichtNietGevondenException(berichtId)
 
         val bijlageId = UUID.randomUUID()
@@ -231,7 +231,7 @@ class BerichtService(
         )
 
         try {
-            bijlageRepository.bewaar(bijlage)
+            bijlageRepository.save(bijlage)
         } catch (e: Exception) {
             log.errorf(e, "Database persist mislukt na MinIO upload, opruimen: objectKey=%s", objectKey)
             try {
@@ -248,7 +248,7 @@ class BerichtService(
     }
 
     fun lijstBijlagen(berichtId: UUID): List<BijlageMetadata> {
-        berichtRepository.vindOpId(berichtId)
+        berichtRepository.getById(berichtId)
             ?: throw BerichtNietGevondenException(berichtId)
 
         return bijlageRepository.findByBerichtId(berichtId)
