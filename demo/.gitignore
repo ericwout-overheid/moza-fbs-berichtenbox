@@ -1,0 +1,4 @@
+.deps/
+.logs/
+.pids/
+frontend/package-lock.json

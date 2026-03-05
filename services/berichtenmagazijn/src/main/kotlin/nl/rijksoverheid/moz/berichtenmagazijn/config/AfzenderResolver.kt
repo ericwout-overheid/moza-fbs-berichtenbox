@@ -2,6 +2,8 @@ package nl.rijksoverheid.moz.berichtenmagazijn.config
 
 import io.quarkus.security.identity.SecurityIdentity
 import jakarta.enterprise.context.ApplicationScoped
+import jakarta.inject.Inject
+import jakarta.ws.rs.core.HttpHeaders
 import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.jboss.logging.Logger
 import java.util.Optional
@@ -24,17 +26,18 @@ class AfzenderResolver(
     @param:ConfigProperty(name = "fbs.dev.afzender-oin")
     private val devAfzenderOin: Optional<String>
 ) {
+    @Inject
+    lateinit var httpHeaders: HttpHeaders
+
     private val log = Logger.getLogger(AfzenderResolver::class.java)
 
-    /**
-     * Resolvet het OIN van de huidige afzender.
-     *
-     * @return het 20-cijferig OIN van de afzender
-     * @throws IllegalStateException als het OIN niet bepaald kan worden (geen principal of configuratie)
-     * @throws IllegalArgumentException als het opgeloste OIN niet voldoet aan het 20-cijferig formaat
-     */
     fun resolve(): String {
         if (devMode) {
+            val headerOin = httpHeaders.getHeaderString("X-Afzender-OIN")
+            if (!headerOin.isNullOrBlank()) {
+                log.debugf("Dev-modus: afzenderOin=%s uit X-Afzender-OIN header", headerOin)
+                return validateOin(headerOin)
+            }
             val oin = devAfzenderOin.orElseThrow {
                 IllegalStateException("Dev-modus actief maar fbs.dev.afzender-oin niet geconfigureerd")
             }

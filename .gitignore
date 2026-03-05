@@ -36,6 +36,7 @@ build/
 
 # Kotlin
 *.class
+.kotlin/
 
 # Vaadin
 node_modules/

@@ -1,0 +1,34 @@
+# FBS Demo — Aanvullende Docker Compose
+# Gebruik: docker compose -f demo/docker-compose.yml up -d
+#
+# Start ALLEEN de extra services die niet in de reguliere dev-deps zitten.
+# De basis-infrastructuur (PostgreSQL, Kafka, MinIO, Jaeger) wordt gestart
+# via infrastructure/docker-compose.deps.yml.
+
+services:
+
+  # ============================================================
+  # PostgreSQL - Profiel Service database (extra, poort 5433)
+  # ============================================================
+  postgres-profiel:
+    image: postgres:16-alpine
+    container_name: fbs-demo-postgres-profiel
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: profiel
+      POSTGRES_PASSWORD: profiel
+      POSTGRES_DB: profiel
+    volumes:
+      - demo-postgres-profiel-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U profiel -d profiel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  demo-postgres-profiel-data:
+    name: fbs-demo-postgres-profiel-data

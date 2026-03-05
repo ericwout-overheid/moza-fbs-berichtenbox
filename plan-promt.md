@@ -19,4 +19,9 @@ Laten we een plan maken om een refentie implementatie te maken voor een federati
   * /don-open-source
   * /don-front-end
   * /don-data
+  * /inet-web
+  * /inet-mail
+  * /inet-toolbox
+  * /inet-api
+  * 
 * Gebruik ook vooronderzoek in docs/kennisoverzicht-fbs.md. 
