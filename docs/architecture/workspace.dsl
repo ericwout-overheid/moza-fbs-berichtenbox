@@ -1,6 +1,11 @@
 workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federatief Berichtenstelsel (FBS) - BBO-opdracht Logius/BZK" {
     !docs workspace-docs
 
+    properties {
+        "nfr.betrouwbaarheid.berichtverlies" "RPO=0: geen berichtverlies; bij verstoring weigert de circuit breaker schrijfoperaties totdat duurzame persistentie is hersteld"
+        "nfr.betrouwbaarheid.applicatielogging" "Bij onbeschikbaarheid logserver worden applicatie-logberichten lokaal opgeslagen voor maximaal 72 uur"
+    }
+
     model {
         // Personen
         burger = person "Burger" "Ontvangt berichten en notificaties van overheidsorganisaties"
@@ -12,6 +17,7 @@ workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federa
         authzen = softwareSystem "AuthZEN / FTV" "Federatieve Toegangsverlening - autorisatie van verzoeken" "Extern Systeem"
         profielService = softwareSystem "Profiel Service" "Contactgegevens, communicatievoorkeuren en toestemmingsbeheer (MoZa)" "Extern Systeem"
         notificatieService = softwareSystem "Notificatie Service" "Multi-channel notificatiebezorging via e-mail, SMS en app (MoZa)" "Extern Systeem"
+        kafka = softwareSystem "Kafka" "Duurzame event streaming voor bericht-lifecycle events (acks=all, 0 berichtverlies)" "Extern Systeem"
 
         // Deelnemende organisatie met eigen berichtenmagazijn
         orgA = softwareSystem "Organisatie A" "Deelnemende overheidsorganisatie met eigen berichtenmagazijn" "Deelnemer" {
@@ -33,57 +39,72 @@ workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federa
                 cmApp = container "Berichtenmagazijn API" "REST API voor berichten opslaan en ophalen" "Quarkus / Kotlin" "Service" {
                     cmBerichtRes = component "Berichten API" "REST endpoints voor berichten CRUD" "JAX-RS Resource"
                     cmBijlageRes = component "Bijlagen API" "REST endpoints voor bijlagen upload/download" "JAX-RS Resource"
+                    cmCircuitBreaker = component "CircuitBreaker" "Weigert schrijfoperaties wanneer RPO=0 niet gegarandeerd kan worden (PostgreSQL, MinIO of Kafka onbeschikbaar)" "MicroProfile Fault Tolerance"
                     cmBerichtSvc = component "BerichtService" "Berichtlevenscyclus: aanmaken, ophalen, bijwerken, verwijderen" "CDI Bean"
                     cmAutorisatie = component "AutorisatieService" "Verifieert autorisatie via AuthZEN/FTV (fail-closed)" "CDI Bean"
-                    cmEventPublisher = component "EventPublisher" "Publiceert CloudEvents NL GOV naar Kafka" "Reactive Messaging"
+                    cmEventPublisher = component "EventPublisher" "Publiceert CloudEvents NL GOV naar Kafka (gegarandeerde aflevering, 0 berichtverlies)" "Reactive Messaging"
                     cmStorageSvc = component "ObjectStorageService" "Berichtinhoud en bijlagen opslaan/ophalen" "MinIO SDK"
                     cmRepository = component "BerichtRepository" "Persistentie van berichten en bijlagen" "Panache ORM"
                     cmLdvLogger = component "LDV Logger" "Logt dataverwerkingen conform LDV-standaard" "OpenTelemetry"
+                    cmAppLogger = component "Applicatie Logger" "Applicatie-logging (foutmeldingen, audit); buffert lokaal bij uitval logserver (max 72 uur)" "SLF4J / Logback"
 
-                    cmBerichtRes -> cmBerichtSvc "Gebruikt"
-                    cmBijlageRes -> cmBerichtSvc "Gebruikt"
+                    cmBerichtRes -> cmCircuitBreaker "Schrijfoperaties via"
+                    cmBijlageRes -> cmCircuitBreaker "Schrijfoperaties via"
+                    cmCircuitBreaker -> cmBerichtSvc "Delegeert naar (als circuit closed)"
                     cmBerichtRes -> cmAutorisatie "Verifieert autorisatie"
                     cmBijlageRes -> cmAutorisatie "Verifieert autorisatie"
                     cmBerichtSvc -> cmRepository "Leest/schrijft"
                     cmBerichtSvc -> cmStorageSvc "Slaat inhoud op"
                     cmBerichtRes -> cmEventPublisher "Publiceert events"
                     cmBerichtSvc -> cmLdvLogger "Logt verwerkingen"
+                    cmBerichtSvc -> cmAppLogger "Logt applicatie-events"
+                    cmCircuitBreaker -> cmAppLogger "Logt circuit state changes"
                 }
-                cmPg = container "PostgreSQL" "Berichtmetadata" "PostgreSQL 16" "Database"
+                cmLogBuffer = container "Lokale Log Buffer" "Lokale opslag voor applicatie-logberichten bij onbeschikbaarheid logserver (max 72 uur retentie)" "Disk" "Database"
+                cmPg = container "PostgreSQL" "Berichtmetadata (transactioneel, 0 berichtverlies)" "PostgreSQL 16" "Database"
                 cmMinio = container "MinIO" "Berichtinhoud en bijlagen" "MinIO" "Database"
-                cmKafka = container "Kafka" "Asynchrone event streaming voor bericht-lifecycle events" "Apache Kafka (KRaft)" "Queue"
 
                 cmRepository -> cmPg "Leest/schrijft metadata" "JDBC"
                 cmStorageSvc -> cmMinio "Slaat inhoud en bijlagen op" "S3 REST API"
-                cmEventPublisher -> cmKafka "Publiceert events" "Kafka Producer" "Async"
+                cmAppLogger -> cmLogBuffer "Buffert applicatie-logberichten lokaal bij uitval logserver" "Disk I/O"
             }
 
             berichtenlijst = softwareSystem "Berichtenlijst" "Aggregeert berichtrecords uit alle aangesloten magazijnen" "FBS Dienst" {
+                blLogBuffer = container "Lokale Log Buffer" "Lokale opslag voor applicatie-logberichten bij onbeschikbaarheid logserver (max 72 uur retentie)" "Disk" "Database"
                 blApp = container "Berichtenlijst API" "REST API voor geaggregeerde berichtrecords" "Quarkus / Kotlin" "Service" {
                     blResource = component "Berichtenlijst API" "REST endpoints voor berichtenlijst en zoeken" "JAX-RS Resource"
                     blService = component "BerichtenlijstService" "Aggregeert en cachet berichtrecords" "CDI Bean"
                     blCache = component "Cache" "In-memory cache voor berichtrecords (60s TTL)" "Caffeine"
                     blMagazijnClient = component "MagazijnClient" "REST client naar berichtenmagazijnen" "REST Client"
                     blLdvLogger = component "LDV Logger" "Logt dataverwerkingen conform LDV-standaard" "OpenTelemetry"
+                    blAppLogger = component "Applicatie Logger" "Applicatie-logging (foutmeldingen, audit); buffert lokaal bij uitval logserver (max 72 uur)" "SLF4J / Logback"
+                    blEventForwarder = component "EventForwarder" "Stuurt bericht-events door naar Notificatie Service" "CloudEvents / REST Client"
 
                     blResource -> blService "Gebruikt"
                     blService -> blCache "Leest/schrijft cache"
                     blService -> blMagazijnClient "Haalt berichtrecords op"
                     blService -> blLdvLogger "Logt verwerkingen"
+                    blService -> blAppLogger "Logt applicatie-events"
+                    blService -> blEventForwarder "Stuurt bericht-events door"
                 }
+                blAppLogger -> blLogBuffer "Buffert applicatie-logberichten lokaal bij uitval logserver" "Disk I/O"
             }
 
             adminDashboard = softwareSystem "Admin Dashboard" "Beheer-UI en systeemmonitoring" "FBS Dienst" {
+                adLogBuffer = container "Lokale Log Buffer" "Lokale opslag voor applicatie-logberichten bij onbeschikbaarheid logserver (max 72 uur retentie)" "Disk" "Database"
                 adApp = container "Admin Dashboard UI" "Web-based beheeromgeving" "Quarkus / Vaadin" "Service" {
                     adViews = component "Vaadin Views" "Dashboard, Berichten, Systeemstatus en LDV Audit Log views" "Vaadin"
                     adDataService = component "DashboardDataService" "Haalt berichtdata op via FBS Client SDK" "CDI Bean"
                     adHealthChecker = component "ServiceHealthChecker" "Controleert beschikbaarheid van FBS diensten" "HTTP Client"
                     adLdvLogger = component "LDV Logger" "Logt dataverwerkingen conform LDV-standaard" "OpenTelemetry"
+                    adAppLogger = component "Applicatie Logger" "Applicatie-logging (foutmeldingen, audit); buffert lokaal bij uitval logserver (max 72 uur)" "SLF4J / Logback"
 
                     adViews -> adDataService "Toont data van"
                     adViews -> adHealthChecker "Toont status van"
                     adDataService -> adLdvLogger "Logt verwerkingen"
+                    adDataService -> adAppLogger "Logt applicatie-events"
                 }
+                adAppLogger -> adLogBuffer "Buffert applicatie-logberichten lokaal bij uitval logserver" "Disk I/O"
             }
 
             // Gedeelde infrastructuur
@@ -93,26 +114,27 @@ workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federa
         // === Landscape relaties ===
 
         // Medewerkers -> hun organisatie
-        medewerkerA -> orgA "Verstuurt berichten via"
+        medewerkerA -> magazijn "Verstuurt berichten via"
         medewerkerB -> orgB "Verstuurt berichten via"
 
         // Burger
-        burger -> berichtenlijst "Bekijkt berichten" "REST API"
+        burger -> blResource "Bekijkt berichten" "REST API"
 
         // Beheerder
-        beheerder -> adminDashboard "Beheert systeem via" "HTTPS (browser)"
+        beheerder -> adViews "Beheert systeem via" "HTTPS (browser)"
 
         // Organisaties -> FBS diensten
-        orgB -> centraalMagazijn "Verstuurt en ontvangt berichten" "REST API via FSC"
+        orgB -> cmBerichtRes "Verstuurt en ontvangt berichten" "REST API via FSC"
 
         // Berichtenlijst notificeert externe Notificatie Service
-        berichtenlijst -> notificatieService "Stuurt bericht-events door" "CloudEvents webhook" "Async"
+        blEventForwarder -> notificatieService "Stuurt bericht-events door" "CloudEvents webhook" "Async"
 
         // Notificatie Service (extern) haalt contactgegevens op
         notificatieService -> profielService "Haalt contactgegevens en voorkeuren op" "REST API"
 
         // Autorisatie (component-niveau)
         cmAutorisatie -> authzen "Evalueert access request" "AuthZEN REST API"
+        cmEventPublisher -> kafka "Publiceert events" "Kafka Producer" "Async"
 
         // Berichtenlijst -> magazijnen (component-niveau)
         blMagazijnClient -> cmApp "Haalt berichtrecords op" "REST API"
