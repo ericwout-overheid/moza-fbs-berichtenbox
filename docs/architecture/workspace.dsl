@@ -37,10 +37,10 @@ workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federa
 
             centraalMagazijn = softwareSystem "Centraal Berichtenmagazijn" "Berichten opslaan en ophalen voor organisaties zonder eigen magazijn" "FBS Dienst" {
                 cmApp = container "Berichtenmagazijn API" "REST API voor berichten opslaan en ophalen" "Quarkus / Kotlin" "Service" {
-                    cmBerichtRes = component "Berichten API" "REST endpoints voor berichten CRUD" "JAX-RS Resource"
-                    cmBijlageRes = component "Bijlagen API" "REST endpoints voor bijlagen upload/download" "JAX-RS Resource"
+                    cmApi = component "Berichtenmagazijn REST API" "REST endpoints voor berichten en bijlagen" "JAX-RS Resource"
                     cmCircuitBreaker = component "CircuitBreaker" "Weigert schrijfoperaties wanneer RPO=0 niet gegarandeerd kan worden (PostgreSQL, MinIO of Kafka onbeschikbaar)" "MicroProfile Fault Tolerance"
                     cmBerichtSvc = component "BerichtService" "Berichtlevenscyclus: aanmaken, ophalen, bijwerken, verwijderen" "CDI Bean"
+                    cmValidatie = component "ValidatieService" "Valideert inkomende berichten en bijlagen op structuur, formaat en inhoud" "CDI Bean"
                     cmAutorisatie = component "AutorisatieService" "Verifieert autorisatie via AuthZEN/FTV (fail-closed)" "CDI Bean"
                     cmEventPublisher = component "EventPublisher" "Publiceert CloudEvents NL GOV naar Kafka (gegarandeerde aflevering, 0 berichtverlies)" "Reactive Messaging"
                     cmStorageSvc = component "ObjectStorageService" "Berichtinhoud en bijlagen opslaan/ophalen" "MinIO SDK"
@@ -48,14 +48,13 @@ workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federa
                     cmLdvLogger = component "LDV Logger" "Logt dataverwerkingen conform LDV-standaard" "OpenTelemetry"
                     cmAppLogger = component "Applicatie Logger" "Applicatie-logging (foutmeldingen, audit); buffert lokaal bij uitval logserver (max 72 uur)" "SLF4J / Logback"
 
-                    cmBerichtRes -> cmCircuitBreaker "Schrijfoperaties via"
-                    cmBijlageRes -> cmCircuitBreaker "Schrijfoperaties via"
+                    cmApi -> cmCircuitBreaker "Schrijfoperaties via"
                     cmCircuitBreaker -> cmBerichtSvc "Delegeert naar (als circuit closed)"
-                    cmBerichtRes -> cmAutorisatie "Verifieert autorisatie"
-                    cmBijlageRes -> cmAutorisatie "Verifieert autorisatie"
+                    cmApi -> cmAutorisatie "Verifieert autorisatie"
+                    cmBerichtSvc -> cmValidatie "Valideert bericht"
                     cmBerichtSvc -> cmRepository "Leest/schrijft"
                     cmBerichtSvc -> cmStorageSvc "Slaat inhoud op"
-                    cmBerichtRes -> cmEventPublisher "Publiceert events"
+                    cmApi -> cmEventPublisher "Publiceert events"
                     cmBerichtSvc -> cmLdvLogger "Logt verwerkingen"
                     cmBerichtSvc -> cmAppLogger "Logt applicatie-events"
                     cmCircuitBreaker -> cmAppLogger "Logt circuit state changes"
@@ -124,7 +123,7 @@ workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federa
         beheerder -> adViews "Beheert systeem via" "HTTPS (browser)"
 
         // Organisaties -> FBS diensten
-        orgB -> cmBerichtRes "Verstuurt en ontvangt berichten" "REST API via FSC"
+        orgB -> cmApi "Verstuurt en ontvangt berichten" "Digikoppeling REST API via FSC"
 
         // Berichtenlijst notificeert externe Notificatie Service
         blEventForwarder -> notificatieService "Stuurt bericht-events door" "CloudEvents webhook" "Async"
@@ -138,7 +137,7 @@ workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federa
 
         // Berichtenlijst -> magazijnen (component-niveau)
         blMagazijnClient -> cmApp "Haalt berichtrecords op" "REST API"
-        blMagazijnClient -> orgA "Haalt berichtrecords op" "REST API via FSC"
+        blMagazijnClient -> orgA "Haalt berichtrecords op" "Digikoppeling REST API via FSC"
 
         // Admin Dashboard -> diensten (component-niveau)
         adDataService -> cmApp "Beheert berichten" "REST API (FBS Client SDK)"
