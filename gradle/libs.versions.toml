@@ -7,7 +7,7 @@ jackson = "2.21.0"
 cloudevents = "4.0.1"
 
 # MinIO
-minio = "8.5.14"
+minio = "8.6.0"
 
 # OpenTelemetry
 opentelemetry = "1.45.0"
