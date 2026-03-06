@@ -31,7 +31,7 @@ docs/                  # Documentatie en plannen
 ```
 
 **Externe services (niet in dit project):**
-- Notificatie Service, Profiel Service — aparte repositories bij MinBZK
+- Notificatie Service, Digitale Bereikbaarheid Service, Profiel Service — aparte repositories bij MinBZK
 - AuthZEN/FTV — federatieve toegangsverlening
 
 ## Build Commands

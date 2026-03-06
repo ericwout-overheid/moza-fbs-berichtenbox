@@ -18,6 +18,8 @@ workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federa
         authzen = softwareSystem "AuthZEN / FTV" "Federatieve Toegangsverlening - autorisatie van verzoeken" "Extern Systeem"
         profielService = softwareSystem "Profiel Service" "Contactgegevens, communicatievoorkeuren en toestemmingsbeheer (MoZa)" "Extern Systeem"
         notificatieService = softwareSystem "Notificatie Service" "Multi-channel notificatiebezorging via e-mail, SMS en app (MoZa)" "Extern Systeem"
+        digitaleBereikbaarheid = softwareSystem "Digitale Bereikbaarheid Service" "Beheert digitale contactgegevens en bereikbaarheidsvoorkeuren van burgers en ondernemers (MoZa)" "Extern Systeem"
+        interactielaag = softwareSystem "Interactielaag" "Portaal of app waarmee burgers en ondernemers communiceren met het berichtenstelsel (MoZa)" "Extern Systeem"
         emailService = softwareSystem "E-mail Service" "Externe e-maildienst voor het doorsturen van berichten" "Extern Systeem"
 
         // Deelnemende organisaties
@@ -112,12 +114,15 @@ workspace "Federatief Berichtenstelsel" "Referentie-implementatie van het Federa
         orgA -> dmApi "Verstuurt en ontvangt berichten" "Digikoppeling REST API via FSC"
         orgB -> dmApi "Verstuurt en ontvangt berichten" "Digikoppeling REST API via FSC"
 
-        // Burger en Ondernemer - alle interactie via BBO API
-        burger -> bboApi "Bekijkt berichten, zoekt, organiseert in mappen, stuurt door, verwijdert" "REST API"
+        // Burger en Ondernemer - interactie via interactielaag
+        burger -> interactielaag "Bekijkt berichten, zoekt, organiseert in mappen, stuurt door, verwijdert" "HTTPS (browser/app)"
+        ondernemer -> interactielaag "Bekijkt berichten, zoekt, organiseert in mappen, stuurt door, verwijdert" "HTTPS (browser/app)"
         emailService -> burger "Bezorgt doorgestuurde berichten" "E-mail"
-
-        ondernemer -> bboApi "Bekijkt berichten, zoekt, organiseert in mappen, stuurt door, verwijdert" "REST API"
         emailService -> ondernemer "Bezorgt doorgestuurde berichten" "E-mail"
+
+        // Interactielaag -> achterliggende diensten
+        interactielaag -> bboApi "Berichten, mappen, zoeken" "REST API"
+        interactielaag -> digitaleBereikbaarheid "Bereikbaarheidsvoorkeuren beheren" "REST API"
 
         // BBO API -> achterliggende diensten
         bboApi -> blApp "Berichtenlijst, mappen, zoeken" "REST API"
