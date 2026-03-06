@@ -69,7 +69,7 @@ check_prerequisites() {
         fi
     else
         local java_version
-        java_version=$(java -version 2>&1 | head -1 | grep -oP '"\K[^"]+' | cut -d. -f1)
+        java_version=$(java -version 2>&1 | head -1 | grep -o '".*[^"]' | cut -d. -f1)
         if [[ "$java_version" -lt 21 ]]; then
             # Try to find a JDK 21+ anyway
             local jdk_dir
