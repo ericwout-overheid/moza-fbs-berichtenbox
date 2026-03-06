@@ -1,5 +1,5 @@
 const BERICHTENMAGAZIJN_URL =
-  import.meta.env.VITE_BERICHTENMAGAZIJN_URL ?? "http://localhost:8080";
+  import.meta.env.VITE_BERICHTENMAGAZIJN_URL ?? "http://localhost:8083";
 const BERICHTENLIJST_URL =
   import.meta.env.VITE_BERICHTENLIJST_URL ?? "http://localhost:8081";
 const MOCK_SERVICES_URL =
@@ -103,7 +103,7 @@ export interface ServiceHealth {
 }
 
 export const SERVICES: Omit<ServiceHealth, "status" | "responseTimeMs">[] = [
-  { name: "Berichtenmagazijn", port: 8080, url: `${BERICHTENMAGAZIJN_URL}/q/health` },
+  { name: "Berichtenmagazijn", port: 8083, url: `${BERICHTENMAGAZIJN_URL}/q/health` },
   { name: "Berichtenlijst", port: 8081, url: `${BERICHTENLIJST_URL}/q/health` },
   { name: "Mock Services", port: 8095, url: `${MOCK_SERVICES_URL}/q/health` },
   { name: "Simulator", port: 8092, url: `${SIMULATOR_URL}/q/health` },

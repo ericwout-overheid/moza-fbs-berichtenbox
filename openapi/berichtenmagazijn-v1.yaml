@@ -19,7 +19,7 @@ servers:
     description: Productieomgeving
   - url: https://berichtenmagazijn.acc.fbs.moza.nl/api/v1
     description: Acceptatieomgeving
-  - url: http://localhost:8080/api/v1
+  - url: http://localhost:8083/api/v1
     description: Lokale ontwikkelomgeving
 
 tags:

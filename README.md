@@ -88,7 +88,7 @@ docker compose -f infrastructure/docker-compose.deps.yml up -d
 ./gradlew :services:berichtenmagazijn:quarkusDev
 ```
 
-De API is beschikbaar op `http://localhost:8080/api/v1/`.
+De API is beschikbaar op `http://localhost:8083/api/v1/`.
 
 ### Tests uitvoeren
 

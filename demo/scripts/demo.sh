@@ -10,7 +10,7 @@ set -euo pipefail
 # 1. Base infrastructure via infrastructure/docker-compose.deps.yml (reuse if running)
 # 2. Extra infrastructure via demo/docker-compose.yml (profiel PostgreSQL)
 # 3. Profiel Service (gekloond van MinBZK/moza-profiel-service)
-# 4. Berichtenmagazijn (port 8080)
+# 4. Berichtenmagazijn (port 8083)
 # 5. Berichtenlijst (port 8081)
 # 6. Mock Services (port 8095)
 # 7. Simulator (port 8092)
@@ -400,7 +400,7 @@ show_status() {
     check_service_status "Kafka" 29092
     check_service_status "MinIO" 9000
     check_service_status "Jaeger" 16686
-    check_service_status "Berichtenmagazijn" 8080
+    check_service_status "Berichtenmagazijn" 8083
     check_service_status "Berichtenlijst" 8081
     check_service_status "Profiel Service" 8088
     check_service_status "Mock Services" 8095
@@ -409,7 +409,7 @@ show_status() {
 
     echo ""
     echo -e "  ${BLUE}Frontend:${NC}          http://localhost:5173"
-    echo -e "  ${BLUE}Berichtenmagazijn:${NC} http://localhost:8080"
+    echo -e "  ${BLUE}Berichtenmagazijn:${NC} http://localhost:8083"
     echo -e "  ${BLUE}Berichtenlijst:${NC}    http://localhost:8081"
     echo -e "  ${BLUE}Jaeger UI:${NC}         http://localhost:16686"
     echo -e "  ${BLUE}MinIO Console:${NC}     http://localhost:9001"
@@ -460,7 +460,7 @@ main() {
             start_profiel_service || log_warn "Profiel Service overgeslagen — demo werkt zonder"
 
             # 3. Berichtenmagazijn
-            start_quarkus_service "berichtenmagazijn" ":services:berichtenmagazijn" 8080
+            start_quarkus_service "berichtenmagazijn" ":services:berichtenmagazijn" 8083
 
             # 4. Berichtenlijst
             start_quarkus_service "berichtenlijst" ":services:berichtenlijst" 8081
