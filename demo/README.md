@@ -31,7 +31,7 @@ via `demo/docker-compose.yml`.
 | Service | Poort | Beschrijving |
 |---------|-------|-------------|
 | Frontend | 5173 | React demo UI |
-| Berichtenmagazijn | 8080 | Core berichten service |
+| Berichtenmagazijn | 8083 | Core berichten service |
 | Berichtenlijst | 8081 | Aggregatie service |
 | Profiel Service | 8088 | Organisatie profielen (optioneel) |
 | Mock Services | 8095 | AuthZEN + Notificatie mocks |
