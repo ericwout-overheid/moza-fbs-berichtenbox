@@ -21,7 +21,7 @@ libs/                  # Herbruikbare libraries (geen Quarkus)
   fbs-cloudevents/     # CloudEvents NL GOV helpers
 
 services/              # Quarkus microservices
-  berichtenmagazijn/   # Core: berichten opslaan/ophalen (port 8080)
+  berichtenmagazijn/   # Core: berichten opslaan/ophalen (port 8083)
   berichtenlijst/      # Aggregatie berichtrecords (port 8081)
   admin-dashboard/     # Beheer-UI (port 8085)
 

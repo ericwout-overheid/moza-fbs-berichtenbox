@@ -3,6 +3,7 @@ package nl.rijksoverheid.moz.berichtenmagazijn.config
 import io.mockk.every
 import io.mockk.mockk
 import io.quarkus.security.identity.SecurityIdentity
+import jakarta.ws.rs.core.HttpHeaders
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.security.Principal
@@ -12,23 +13,31 @@ import java.util.Optional
 class AfzenderResolverTest {
 
     private val securityIdentity = mockk<SecurityIdentity>()
+    private val httpHeaders = mockk<HttpHeaders> {
+        every { getHeaderString("X-Afzender-OIN") } returns null
+    }
     private val validOin = "00000001234567890000"
+
+    private fun devResolver(devAfzenderOin: Optional<String> = Optional.of(validOin)) =
+        AfzenderResolver(securityIdentity, devMode = true, devAfzenderOin = devAfzenderOin).also {
+            it.httpHeaders = httpHeaders
+        }
 
     @Test
     fun `dev-mode returns configured OIN`() {
-        val resolver = AfzenderResolver(securityIdentity, devMode = true, devAfzenderOin = Optional.of(validOin))
+        val resolver = devResolver()
         assertEquals(validOin, resolver.resolve())
     }
 
     @Test
     fun `dev-mode throws when OIN not configured`() {
-        val resolver = AfzenderResolver(securityIdentity, devMode = true, devAfzenderOin = Optional.empty())
+        val resolver = devResolver(devAfzenderOin = Optional.empty())
         assertThrows<IllegalStateException> { resolver.resolve() }
     }
 
     @Test
     fun `dev-mode validates OIN format`() {
-        val resolver = AfzenderResolver(securityIdentity, devMode = true, devAfzenderOin = Optional.of("invalid"))
+        val resolver = devResolver(devAfzenderOin = Optional.of("invalid"))
         assertThrows<IllegalArgumentException> { resolver.resolve() }
     }
 
