@@ -17,7 +17,7 @@ opentelemetry-instrumentation = "2.11.0"
 vaadin = "24.6.5"
 
 # Testing
-mockk = "1.13.14"
+mockk = "1.14.9"
 testcontainers = "2.0.3"
 rest-assured = "6.0.0"
 
