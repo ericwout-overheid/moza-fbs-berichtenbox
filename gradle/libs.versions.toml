@@ -14,7 +14,7 @@ opentelemetry = "1.45.0"
 opentelemetry-instrumentation = "2.11.0"
 
 # Vaadin
-vaadin = "24.6.5"
+vaadin = "25.0.6"
 
 # Testing
 mockk = "1.13.14"
